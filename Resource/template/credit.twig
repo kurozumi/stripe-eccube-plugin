@@ -1,0 +1,96 @@
+{#
+    Shopping/index.twigに追記
+    {{ include('@Stripe/credit.twig', ignore_missing=true) }}
+#}
+{% if Order.Payment.getMethodClass == 'Plugin\\Stripe\\Service\\Method\\CreditCard' %}
+    <div class="ec-orderPayment">
+        <div class="ec-rectHeading">
+            <h2>クレジットカード</h2>
+            <div class="ec-input">
+                <script src="https://js.stripe.com/v3/"></script>
+                <div class="form-row">
+                    <div id="card-element">
+                        <!-- ここにクレジットカード情報入力欄が挿入される -->
+                    </div>
+
+                    <!-- ここにエラーメッセージが表示される -->
+                    <div id="card-errors" role="alert"></div>
+                </div>
+                <button id="stripe" class="ec-blockBtn--action">クレジットカード情報チェック</button>
+            </div>
+        </div>
+
+        <script>
+            var stripe = Stripe('{{ stripe_public_key }}');
+            var elements = stripe.elements();
+
+            // スタイルのカスタマイズ
+            var style = {
+                base: {
+                    color: '#32325d',
+                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                    fontSmoothing: 'antialiased',
+                    fontSize: '16px',
+                    '::placeholder': {
+                        color: '#aab7c4'
+                    }
+                },
+                invalid: {
+                    color: '#fa755a',
+                    iconColor: '#fa755a'
+                }
+            };
+
+            // クレジットカード情報入力欄の構築
+            var card = elements.create('card', {style: style});
+            card.mount('#card-element');
+
+            // 入力変更時のリスナー
+            // バリデーションメッセージを表示する
+            card.addEventListener('change', function(event) {
+                var displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+
+            // submit時のリスナー
+            var button = document.getElementById('stripe');
+            button.addEventListener('click', function(event) {
+                event.preventDefault();
+
+                // Stripeサーバにクレジットカード情報を送信してクレジットカードトークンを取得する
+                stripe.createToken(card).then(function(result) {
+                    if (result.error) {
+                        var errorElement = document.getElementById('card-errors');
+                        errorElement.textContent = result.error.message;
+                    } else {
+                        // クレジットカードトークンをサーバにsubmitする
+                        stripeTokenHandler(result.token);
+                    }
+                });
+            });
+
+            function stripeTokenHandler(token) {
+                var form = document.getElementById('shopping-form');
+
+                var stripe_token = document.getElementsByName('{{ form.stripe_token.vars.full_name }}')
+                if(stripe_token.length > 0) {
+                    stripe_token.forEach(function (token) {
+                        token.remove();
+                    });
+                }
+
+                var hiddenInput = document.createElement('input');
+                hiddenInput.setAttribute('type', 'hidden');
+                hiddenInput.setAttribute('name', '{{ form.stripe_token.vars.full_name }}');
+                hiddenInput.setAttribute('value', token.id);
+                form.appendChild(hiddenInput);
+            }
+        </script>
+    </div>
+{% else %}
+    {{ form_widget(form.stripe_token, {type: 'hidden'}) }}
+{% endif %}

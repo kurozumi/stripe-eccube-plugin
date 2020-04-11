@@ -1,0 +1,13 @@
+{
+  "name": "ec-cube/Stripe",
+  "version": "1.0.0",
+  "description": "Stripe",
+  "type": "eccube-plugin",
+  "require": {
+    "ec-cube/plugin-installer": "~0.0.7",
+    "stripe/stripe-php": "*"
+  },
+  "extra": {
+    "code": "Stripe"
+  }
+}
