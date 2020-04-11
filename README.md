@@ -9,8 +9,8 @@ EC-CUBE4でStripeでクレジットカード決済ができるプラグインの
 ```
 bin/console eccube:composer:require stripe/stripe-php
 
-bin/console eccube:plugin:install --code PayJP
-bin/console eccube:plugin:enable --code PayJP
+bin/console eccube:plugin:install --code Stripe
+bin/console eccube:plugin:enable --code Stripe
 ```
 
 ## シークレットキーと公開キーを設定
