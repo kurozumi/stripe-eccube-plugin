@@ -1,6 +1,6 @@
 parameters:
-  stripe_secret_key: sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx #シークレットキー
+  stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
 
 twig:
   globals:
-    stripe_public_key: pk_test_0qJvdNsbljRCueJvLHcQZpBp000QbmBBNa #公開キー
+    stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
