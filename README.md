@@ -18,13 +18,10 @@ bin/console eccube:plugin:enable --code Stripe
 Stripeのアカウントを取得して秘密鍵と公開鍵を環境変数(.env)に設定してください。
 
 ```
-
-###> kurozumi/eccube4-Stripe ###
 ## 公開キー
 STRIPE_PUBLIC_KEY=pk_test_0qJvdNsbljRCueJvLHcQZpBp000QbmBBNa
 ## シークレットキー
 STRIPE_SECRET_KEY=sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx
-###< kurozumi/eccube4-Stripe ###
 ```
 
 ## Shopping/index.twigにタグを追記
