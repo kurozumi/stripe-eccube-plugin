@@ -5,18 +5,30 @@
 {% if Order.Payment.getMethodClass == 'Plugin\\Stripe4\\Service\\Method\\CreditCard' %}
     <div class="ec-orderPayment">
         <div class="ec-rectHeading">
-            <h2>クレジットカード</h2>
+            <h2>クレジットカード情報</h2>
             <div class="ec-input">
                 <script src="https://js.stripe.com/v3/"></script>
                 <div class="form-row">
-                    <div id="card-element">
-                        <!-- ここにクレジットカード情報入力欄が挿入される -->
+                    <div class="form-group">
+                        <div id="card-number" class="form-control">
+                            <!-- ここにクレジットカード番号入力欄が挿入される -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div id="card-expiry" class="form-control">
+                            <!-- ここにクレジットカード有効期限入力欄が挿入される -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div id="card-cvc" class="form-control">
+                            <!-- ここにクレジットカードセキュリティ番号入力欄が挿入される -->
+                        </div>
                     </div>
 
                     <!-- ここにエラーメッセージが表示される -->
                     <div id="card-errors" role="alert"></div>
                 </div>
-                {{ form_widget(form.stripe_token, {type: 'hidden'}) }}
+                {{ form_widget(form.stripe_token) }}
             </div>
         </div>
 
@@ -30,7 +42,6 @@
                     color: '#32325d',
                     fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
                     fontSmoothing: 'antialiased',
-                    fontSize: '16px',
                     '::placeholder': {
                         color: '#aab7c4'
                     }
@@ -42,12 +53,36 @@
             };
 
             // クレジットカード情報入力欄の構築
-            var card = elements.create('card', {style: style});
-            card.mount('#card-element');
+            const cardNumber = elements.create('cardNumber', {style: style, placeholder: 'カード番号 1111 1111 1111 1111'});
+            cardNumber.mount("#card-number");
+
+            const cardExpiry = elements.create('cardExpiry', {style: style, placeholder: '有効期限　MM/YY'});
+            cardExpiry.mount("#card-expiry");
+
+            const cardCvc = elements.create('cardCvc', {style: style, placeholder: 'セキュリティ番号'});
+            cardCvc.mount("#card-cvc");
 
             // 入力変更時のリスナー
             // バリデーションメッセージを表示する
-            card.addEventListener('change', function(event) {
+            cardNumber.addEventListener('change', function(event) {
+                var displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+
+            cardExpiry.addEventListener('change', function(event) {
+                var displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+
+            cardCvc.addEventListener('change', function(event) {
                 var displayError = document.getElementById('card-errors');
                 if (event.error) {
                     displayError.textContent = event.error.message;
@@ -71,7 +106,7 @@
                         event.preventDefault();
 
                         // Stripeサーバにクレジットカード情報を送信してクレジットカードトークンを取得する
-                        stripe.createToken(card).then(function(result) {
+                        stripe.createToken(cardNumber).then(function(result) {
                             if (result.error) {
                                 var errorElement = document.getElementById('card-errors');
                                 errorElement.textContent = result.error.message;
@@ -98,6 +133,4 @@
             }
         </script>
     </div>
-{% else %}
-    {{ form_widget(form.stripe_token, {type: 'hidden'}) }}
 {% endif %}
