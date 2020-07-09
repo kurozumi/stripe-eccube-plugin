@@ -1,7 +1,7 @@
 # Stripe for EC-CUBE4
 
-EC-CUBE4でStripeでクレジットカード決済ができるプラグインのサンプルです。  
-非公式プラグインですのでご利用は自己責任でお願い致します。  
+EC-CUBE4でStripeでクレジットカード決済ができるプラグインのサンプルです。
+非公式プラグインですのでご利用は自己責任でお願い致します。
 
 
 ## インストールと有効化
@@ -9,8 +9,8 @@ EC-CUBE4でStripeでクレジットカード決済ができるプラグインの
 ```
 bin/console eccube:composer:require stripe/stripe-php
 
-bin/console eccube:plugin:install --code Stripe
-bin/console eccube:plugin:enable --code Stripe
+bin/console eccube:plugin:install --code Stripe4
+bin/console eccube:plugin:enable --code Stripe4
 ```
 
 ## シークレットキーと公開キーを設定
@@ -29,7 +29,7 @@ STRIPE_SECRET_KEY=sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx
 Shopping/index.twigに以下のタグを追記してください。
 
 ```
-{{ include('@Stripe/credit.twig', ignore_missing=true) }}
+{{ include('@Stripe4/credit.twig', ignore_missing=true) }}
 ```
 
 以上で設定は終了です。

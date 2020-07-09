@@ -1,9 +1,9 @@
 <?php
 
-namespace Plugin\Stripe\Repository;
+namespace Plugin\Stripe4\Repository;
 
 use Eccube\Repository\AbstractRepository;
-use Plugin\Stripe\Entity\PaymentStatus;
+use Plugin\Stripe4\Entity\PaymentStatus;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 class PaymentStatusRepository extends AbstractRepository

@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugin\Stripe;
+namespace Plugin\Stripe4;
 
 use Eccube\Common\EccubeTwigBlock;
 
@@ -12,7 +12,7 @@ class TwigBlock implements EccubeTwigBlock
     public static function getTwigBlock()
     {
         return [
-            '@Stripe/credit.twig'
+            '@Stripe4/credit.twig'
         ];
     }
 }

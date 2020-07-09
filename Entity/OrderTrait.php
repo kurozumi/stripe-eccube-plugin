@@ -1,14 +1,14 @@
 <?php
 
 
-namespace Plugin\Stripe\Entity;
+namespace Plugin\Stripe4\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Eccube\Annotation\EntityExtension;
 
 /**
  * Trait OrderTrait
- * @package Plugin\Stripe\Entity
+ * @package Plugin\Stripe4\Entity
  *
  * @EntityExtension("Eccube\Entity\Order")
  */
@@ -28,7 +28,7 @@ trait OrderTrait
 
     /**
      * @var PaymentStatus
-     * @ORM\ManyToOne(targetEntity="Plugin\Stripe\Entity\PaymentStatus")
+     * @ORM\ManyToOne(targetEntity="Plugin\Stripe4\Entity\PaymentStatus")
      * @ORM\JoinColumn(name="stripe_payment_status_id", referencedColumnName="id")
      */
     private $StripePaymentStatus;

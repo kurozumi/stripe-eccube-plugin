@@ -1,14 +1,14 @@
 <?php
 
 
-namespace Plugin\Stripe;
+namespace Plugin\Stripe4;
 
 
 use Eccube\Entity\Payment;
 use Eccube\Plugin\AbstractPluginManager;
 use Eccube\Repository\PaymentRepository;
-use Plugin\Stripe\Entity\PaymentStatus;
-use Plugin\Stripe\Service\Method\CreditCard;
+use Plugin\Stripe4\Entity\PaymentStatus;
+use Plugin\Stripe4\Service\Method\CreditCard;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class PluginManager extends AbstractPluginManager

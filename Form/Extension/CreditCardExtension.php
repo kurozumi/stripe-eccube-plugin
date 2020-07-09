@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Plugin\Stripe\Form\Extension;
+namespace Plugin\Stripe4\Form\Extension;
 
 
 use Eccube\Form\Type\Shopping\OrderType;

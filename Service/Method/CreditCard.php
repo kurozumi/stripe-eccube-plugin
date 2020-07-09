@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Plugin\Stripe\Service\Method;
+namespace Plugin\Stripe4\Service\Method;
 
 
 use Eccube\Common\EccubeConfig;
@@ -13,8 +13,8 @@ use Eccube\Service\Payment\PaymentMethodInterface;
 use Eccube\Service\Payment\PaymentResult;
 use Eccube\Service\PurchaseFlow\PurchaseContext;
 use Eccube\Service\PurchaseFlow\PurchaseFlow;
-use Plugin\Stripe\Entity\PaymentStatus;
-use Plugin\Stripe\Repository\PaymentStatusRepository;
+use Plugin\Stripe4\Entity\PaymentStatus;
+use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Stripe\Charge;
 use Stripe\Stripe;
 use Symfony\Component\Form\FormInterface;

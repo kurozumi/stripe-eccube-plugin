@@ -1,16 +1,16 @@
 <?php
 
-namespace Plugin\Stripe\Entity;
+namespace Plugin\Stripe4\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Eccube\Entity\Master\AbstractMasterEntity;
 
 /**
  * Class PaymentStatus
- * @package Plugin\Stripe\Entity
+ * @package Plugin\Stripe4\Entity
  *
  * @ORM\Table(name="plg_stripe_payment_status")
- * @ORM\Entity(repositoryClass="Plug\Stripe\Repository\PaymentStatusRepository")
+ * @ORM\Entity(repositoryClass="Plug\Stripe4\Repository\PaymentStatusRepository")
  */
 class PaymentStatus extends AbstractMasterEntity
 {
