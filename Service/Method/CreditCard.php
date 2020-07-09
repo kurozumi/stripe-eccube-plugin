@@ -110,7 +110,7 @@ class CreditCard implements PaymentMethodInterface
             $this->purchaseFlow->commit($this->Order, new PurchaseContext());
 
             $result->setSuccess(true);
-        }else{
+        } else {
             // 受注ステータスを購入処理中へ変更
             $OrderStatus = $this->orderStatusRepository->find(OrderStatus::PROCESSING);
             $this->Order->setOrderStatus($OrderStatus);
@@ -122,6 +122,7 @@ class CreditCard implements PaymentMethodInterface
             $this->purchaseFlow->rollback($this->Order, new PurchaseContext());
 
             $result->setSuccess(false);
+            $result->setErrors([trans('sample_payment.shopping.checkout.error')]);
         }
 
         return $result;
