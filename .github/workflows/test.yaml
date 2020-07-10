@@ -56,7 +56,7 @@ jobs:
       - name: Install Plugin
         run: |
           cd ec-cube
-          composer:require stripe/stripe-php
+          composer require stripe/stripe-php
           bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
           bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
         env:
@@ -129,7 +129,7 @@ jobs:
       - name: Install Plugin
         run: |
           cd ec-cube
-          composer:require stripe/stripe-php
+          composer require stripe/stripe-php
           bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
           bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
         env:
