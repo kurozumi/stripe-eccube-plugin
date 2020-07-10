@@ -104,6 +104,7 @@ class CreditCard implements PaymentMethodInterface
         $result = new PaymentResult();
 
         try {
+            log_info(sprintf("%s::create", Charge::class));
             $charge = Charge::create([
                 'amount' => $this->Order->getPaymentTotal(),
                 'currency' => $this->eccubeConfig['currency'],
@@ -137,8 +138,9 @@ class CreditCard implements PaymentMethodInterface
 
             $this->purchaseFlow->rollback($this->Order, new PurchaseContext());
 
+            log_error(sprintf("%s: %s", CreditCard::class, $e->getMessage()));
             $result->setSuccess(false);
-            $result->setErrors([trans('sample_payment.shopping.checkout.error')]);
+            $result->setErrors([trans('stripe.shopping.checkout.error')]);
         }
 
         return $result;
