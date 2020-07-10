@@ -1,0 +1,147 @@
+name: CI/CD for EC-CUBE4 PLUGIN
+on: push
+jobs:
+  mysql:
+    name: MySQL
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: [7.1,7.2,7.3]
+        mysql-versions: [5.5, 5.6, 5.7]
+        eccube-versions: ['4.0']
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql-versions }}
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: false
+          MYSQL_ROOT_USER: root
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: eccube_db
+        ports:
+          - 3306/tcp
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Setup PHP, with composer and extensions
+        uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: mbstring, xml, ctype, iconv, mysql, intl
+
+      - name: Install EC-CUBE
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tar cvzf $HOME/${{ github.event.repository.name }}.tar.gz ./*
+          git clone  https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b ${{ matrix.eccube-versions }} --depth=1
+
+      - name: Install Composer
+        run : |
+          cd ec-cube
+          composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+
+      - name: Setup EC-CUBE
+        run: |
+          cd ec-cube
+          bin/console doctrine:schema:create
+          bin/console eccube:fixtures:load
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.mysql-versions }}
+
+      - name: Install Plugin
+        run: |
+          cd ec-cube
+          bin/console eccube:composer:require stripe/stripe-php
+          bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
+          bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.mysql-versions }}
+
+      - name: Run Tests
+        run: |
+          cd ec-cube
+          bin/phpunit app/Plugin/${{ github.event.repository.name }}/Tests
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.mysql-versions }}
+          STRIPE_PUBLIC_KEY: pk_test_0qJvdNsbljRCueJvLHcQZpBp000QbmBBNa
+          STRIPE_SECRET_KEY: sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx
+
+
+  postgres:
+    name: PostgreSQL
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: [7.1,7.2,7.3]
+        postgres-versions: [9.4, 10]
+        eccube-versions: [4.0.3]
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres-versions }}
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: eccube_db
+        ports:
+          - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Setup PHP, with composer and extensions
+        uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: mbstring, xml, ctype, iconv, mysql, intl
+
+      - name: Install EC-CUBE
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tar cvzf $HOME/${{ github.event.repository.name }}.tar.gz ./*
+          git clone https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b ${{ matrix.eccube-versions }} --depth=1
+
+      - name: Install Composer
+        run : |
+          cd ec-cube
+          composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+
+      - name: Setup EC-CUBE
+        run: |
+          cd ec-cube
+          bin/console doctrine:schema:create
+          bin/console eccube:fixtures:load
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
+
+      - name: Install Plugin
+        run: |
+          cd ec-cube
+          bin/console eccube:composer:require stripe/stripe-php
+          bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
+          bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
+
+      - name: Run Tests
+        run: |
+          cd ec-cube
+          bin/phpunit app/Plugin/${{ github.event.repository.name }}/Tests
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
+          STRIPE_PUBLIC_KEY: pk_test_0qJvdNsbljRCueJvLHcQZpBp000QbmBBNa
+          STRIPE_SECRET_KEY: sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx
