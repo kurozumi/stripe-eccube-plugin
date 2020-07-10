@@ -27,6 +27,14 @@ trait OrderTrait
     private $stripe_charge_id;
 
     /**
+     * クレジットカード番号の末尾4桁
+     *
+     * @var string
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $stripe_card_no_last4;
+
+    /**
      * @var PaymentStatus
      * @ORM\ManyToOne(targetEntity="Plugin\Stripe4\Entity\PaymentStatus")
      * @ORM\JoinColumn(name="stripe_payment_status_id", referencedColumnName="id")
@@ -67,6 +75,25 @@ trait OrderTrait
     public function setStripeChargeId(?string $stripe_charge_id): self
     {
         $this->stripe_charge_id = $stripe_charge_id;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getStripeCardNoLast4(): ?string
+    {
+        return $this->stripe_card_no_last4;
+    }
+
+    /**
+     * @param string|null $stripe_card_no_last4
+     * @return $this
+     */
+    public function setStripeCardNoLast4(?string $stripe_card_no_last4): self
+    {
+        $this->stripe_card_no_last4 = $stripe_card_no_last4;
 
         return $this;
     }

@@ -19,6 +19,7 @@ use Stripe\Charge;
 use Stripe\Customer;
 use Stripe\Exception\CardException;
 use Stripe\Stripe;
+use Stripe\Token;
 use Symfony\Component\Form\FormInterface;
 
 class CreditCard implements PaymentMethodInterface
@@ -64,6 +65,8 @@ class CreditCard implements PaymentMethodInterface
         $this->paymentStatusRepository = $paymentStatusRepository;
         $this->purchaseFlow = $shoppingPurchaseFlow;
         $this->eccubeConfig = $eccubeConfig;
+
+        Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
     }
 
     /**
@@ -80,6 +83,11 @@ class CreditCard implements PaymentMethodInterface
         // 決済ステータスを有効性チェック済みへ変更
         $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::ENABLED);
         $this->Order->setStripePaymentStatus($PaymentStatus);
+
+        // クレジットカード番号の末尾4桁を保存
+        $token = $this->Order->getStripeToken();
+        $tokenObj = Token::retrieve($token);
+        $this->Order->setStripeCardNoLast4($tokenObj->card->last4);
 
         $result = new PaymentResult();
         $result->setSuccess(true);
@@ -98,8 +106,6 @@ class CreditCard implements PaymentMethodInterface
     {
         // TODO: Implement checkout() method.
         $token = $this->Order->getStripeToken();
-
-        Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
 
         $result = new PaymentResult();
 
