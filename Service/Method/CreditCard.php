@@ -16,6 +16,8 @@ use Eccube\Service\PurchaseFlow\PurchaseFlow;
 use Plugin\Stripe4\Entity\PaymentStatus;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Stripe\Charge;
+use Stripe\Customer;
+use Stripe\Exception\CardException;
 use Stripe\Stripe;
 use Symfony\Component\Form\FormInterface;
 
@@ -54,22 +56,31 @@ class CreditCard implements PaymentMethodInterface
     public function __construct(
         OrderStatusRepository $orderStatusRepository,
         PaymentStatusRepository $paymentStatusRepository,
-        PurchaseFlow $purchaseFlow,
+        PurchaseFlow $shoppingPurchaseFlow,
         EccubeConfig $eccubeConfig
     )
     {
         $this->orderStatusRepository = $orderStatusRepository;
         $this->paymentStatusRepository = $paymentStatusRepository;
-        $this->purchaseFlow = $purchaseFlow;
+        $this->purchaseFlow = $shoppingPurchaseFlow;
         $this->eccubeConfig = $eccubeConfig;
     }
 
     /**
      * @inheritDoc
+     *
+     * 注文確認画面遷移時に呼び出される
+     *
+     * クレジットカードの有効性チェックを行う
      */
     public function verify()
     {
         // TODO: Implement verify() method.
+
+        // 決済ステータスを有効性チェック済みへ変更
+        $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::ENABLED);
+        $this->Order->setStripePaymentStatus($PaymentStatus);
+
         $result = new PaymentResult();
         $result->setSuccess(true);
 
@@ -78,6 +89,10 @@ class CreditCard implements PaymentMethodInterface
 
     /**
      * @inheritDoc
+     *
+     * 注文時に呼び出される。
+     *
+     * クレジットカードの決済処理を行う。
      */
     public function checkout()
     {
@@ -86,15 +101,15 @@ class CreditCard implements PaymentMethodInterface
 
         Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
 
-        $charge = Charge::create([
-            'source' => $token,
-            'currency' => $this->eccubeConfig['currency'],
-            'amount' => $this->Order->getPaymentTotal()
-        ]);
-
         $result = new PaymentResult();
 
-        if ($charge instanceof Charge) {
+        try {
+            $charge = Charge::create([
+                'amount' => $this->Order->getPaymentTotal(),
+                'currency' => $this->eccubeConfig['currency'],
+                "source" => $token,
+            ]);
+
             // 受注ステータスを新規受付へ変更
             $OrderStatus = $this->orderStatusRepository->find(OrderStatus::NEW);
             $this->Order->setOrderStatus($OrderStatus);
@@ -110,7 +125,8 @@ class CreditCard implements PaymentMethodInterface
             $this->purchaseFlow->commit($this->Order, new PurchaseContext());
 
             $result->setSuccess(true);
-        } else {
+
+        } catch (\Exception $e) {
             // 受注ステータスを購入処理中へ変更
             $OrderStatus = $this->orderStatusRepository->find(OrderStatus::PROCESSING);
             $this->Order->setOrderStatus($OrderStatus);
@@ -130,6 +146,10 @@ class CreditCard implements PaymentMethodInterface
 
     /**
      * @inheritDoc
+     *
+     * 注文時に呼び出される
+     *
+     * 注文ステータス、決済ステータスを更新する。
      */
     public function apply()
     {
@@ -137,10 +157,6 @@ class CreditCard implements PaymentMethodInterface
         // 受注ステーテスを決済処理中へ変更
         $OrderStatus = $this->orderStatusRepository->find(OrderStatus::PENDING);
         $this->Order->setOrderStatus($OrderStatus);
-
-        // 決済ステータスを未決済へ変更
-        $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::OUTSTANDING);
-        $this->Order->setStripePaymentStatus($PaymentStatus);
 
         $this->purchaseFlow->prepare($this->Order, new PurchaseContext());
     }

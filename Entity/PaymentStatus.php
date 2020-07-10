@@ -10,7 +10,7 @@ use Eccube\Entity\Master\AbstractMasterEntity;
  * @package Plugin\Stripe4\Entity
  *
  * @ORM\Table(name="plg_stripe_payment_status")
- * @ORM\Entity(repositoryClass="Plug\Stripe4\Repository\PaymentStatusRepository")
+ * @ORM\Entity(repositoryClass="Plugin\Stripe4\Repository\PaymentStatusRepository")
  */
 class PaymentStatus extends AbstractMasterEntity
 {
