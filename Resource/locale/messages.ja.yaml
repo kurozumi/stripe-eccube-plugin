@@ -7,6 +7,7 @@ stripe.admin.save.failed: '登録に失敗しました。'
 stripe.admin.order.cancel.success: '取消処理を行いました。'
 stripe.admin.order.change_price.success: '取消処理を行いました。'
 stripe.admin.payment_status.bulk_action.success: '%count%件を処理しました。'
+stripe.admin.payment_status.bulk_action.error: '%count%件を失敗しました。'
 
 # twig
 stripe.admin.config.title: 'Stripe管理'

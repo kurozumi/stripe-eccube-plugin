@@ -6,7 +6,6 @@ namespace Plugin\Stripe4;
 
 use Eccube\Entity\Payment;
 use Eccube\Plugin\AbstractPluginManager;
-use Eccube\Repository\PaymentRepository;
 use Plugin\Stripe4\Entity\Config;
 use Plugin\Stripe4\Entity\PaymentStatus;
 use Plugin\Stripe4\Repository\ConfigRepository;
@@ -82,7 +81,7 @@ class PluginManager extends AbstractPluginManager
             PaymentStatus::ENABLED => '有効性チェック済',
             PaymentStatus::PROVISIONAL_SALES => '仮売上',
             PaymentStatus::ACTUAL_SALES => '実売上',
-            PaymentStatus::CANCEL => 'キャンセル'
+            PaymentStatus::CANCEL => '返金'
         ];
         $this->createMasterData($container, $statuses, PaymentStatus::class);
     }

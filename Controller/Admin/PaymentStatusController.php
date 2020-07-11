@@ -5,16 +5,23 @@ namespace Plugin\Stripe4\Controller\Admin;
 
 
 use Eccube\Common\Constant;
+use Eccube\Common\EccubeConfig;
 use Eccube\Controller\AbstractController;
 use Eccube\Entity\Master\PageMax;
 use Eccube\Entity\Order;
+use Eccube\Repository\Master\OrderStatusRepository;
 use Eccube\Repository\Master\PageMaxRepository;
 use Eccube\Repository\OrderRepository;
+use Eccube\Service\OrderStateMachine;
 use Eccube\Util\FormUtil;
 use Knp\Component\Pager\PaginatorInterface;
+use Plugin\Stripe4\Entity\PaymentStatus;
 use Plugin\Stripe4\Form\Type\Admin\SearchPaymentType;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
+use Stripe\Charge;
+use Stripe\Refund;
+use Stripe\Stripe;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
@@ -27,6 +34,11 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class PaymentStatusController extends AbstractController
 {
+    protected $bulkActions = [
+        ['id' => 1, 'name' => '一括売上'],
+        ['id' => 2, 'name' => '一括返金'],
+    ];
+
     /**
      * @var PaymentStatusRepository
      */
@@ -42,21 +54,33 @@ class PaymentStatusController extends AbstractController
      */
     protected $orderRepository;
 
-    protected $bulkActions = [
-        ['id' => 1, 'name' => '一括売上'],
-        ['id' => 2, 'name' => '一括取消'],
-        ['id' => 3, 'name' => '一括再オーソリ']
-    ];
+    /**
+     * @var OrderStateMachine
+     */
+    private $orderStateMachine;
+
+    /**
+     * @var OrderStatusRepository
+     */
+    private $orderStatusRepository;
 
     public function __construct(
         PaymentStatusRepository $paymentStatusRepository,
         PageMaxRepository $pageMaxRepository,
-        OrderRepository $orderRepository
+        OrderRepository $orderRepository,
+        EccubeConfig $eccubeConfig,
+        OrderStateMachine $orderStateMachine,
+        OrderStatusRepository $orderStatusRepository
     )
     {
         $this->paymentStatusRepository = $paymentStatusRepository;
         $this->pageMaxRepository = $pageMaxRepository;
         $this->orderRepository = $orderRepository;
+        $this->eccubeConfig = $eccubeConfig;
+        $this->orderStateMachine = $orderStateMachine;
+        $this->orderStatusRepository = $orderStatusRepository;
+
+        Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
     }
 
     /**
@@ -180,7 +204,11 @@ class PaymentStatusController extends AbstractController
      */
     public function bulkAction(Request $request, $id)
     {
-        if (!isset($this->bulkActions[$id])) {
+        $bulkAction = array_filter($this->bulkActions, function ($bulkAction) use ($id) {
+            return $bulkAction["id"] == $id;
+        });
+
+        if (!$bulkAction) {
             throw new BadRequestHttpException();
         }
 
@@ -188,31 +216,50 @@ class PaymentStatusController extends AbstractController
 
         /** @var Order[] $orders */
         $orders = $this->orderRepository->findBy(['id' => $request->get('ids')]);
-        $count = 0;
+        /** @var PaymentStatus $actualSales */
+        $actualSales = $this->paymentStatusRepository->find(PaymentStatus::ACTUAL_SALES);
+        /** @var PaymentStatus $cancel */
+        $cancel = $this->paymentStatusRepository->find(PaymentStatus::CANCEL);
 
+        $success = 0;
+        $errors = 0;
+        /** @var Order $order */
         foreach ($orders as $order) {
-            switch ($id) {
-                // 一括売上
-                case 1:
-                    // 通信処理
-                    // Order等の更新処理
-                    break;
-                // 一括処理
-                case 2:
-                    // 通信処理
-                    // Order等の更新処理
-                    break;
-                // 一括再オーソリ
-                case 3:
-                    // 通信処理
-                    // Order等の更新処理
-                    break;
+            try {
+                switch ($id) {
+                    // 一括売上
+                    case 1:
+                        // 実売上処理
+                        Charge::retrieve($order->getStripeChargeId())->capture();
+                        // 決済ステータスを実売上に変更
+                        $order->setStripePaymentStatus($actualSales);
+                        break;
+                    // 一括返金
+                    case 2:
+                        // 払い戻し処理
+                        Refund::create([
+                            "charge" => $order->getStripeChargeId()
+                        ]);
+                        // 決済ステータスをキャンセルに変更
+                        $order->setStripePaymentStatus($cancel);
+                        break;
+                }
+                $this->entityManager->flush();
+                $success++;
+
+            } catch (\Exception $e) {
+                log_error(sprintf("%s: %s", PaymentStatusController::class, $e->getMessage()));
+                $errors++;
             }
-            $this->entityManager->flush();
-            $count++;
         }
 
-        $this->addSuccess(trans('stripe.admin.payment_status.bulk_action.success'), ['%count%' => $count]);
+        if($success) {
+            $this->addSuccess(trans('stripe.admin.payment_status.bulk_action.success', ['%count%' => $success]), 'admin');
+        }
+
+        if($errors) {
+            $this->addError(trans('stripe.admin.payment_status.bulk_action.error', ['%count%' => $errors]), 'admin');
+        }
 
         return $this->redirectToRoute('stripe_admin_payment_status_pageno', ['resume' => Constant::ENABLED]);
     }
