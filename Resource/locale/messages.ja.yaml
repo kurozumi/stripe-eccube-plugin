@@ -1,56 +1,61 @@
 # nav
-stripe.admin.nav.payment_list: 決済状況一覧
+stripe.admin.nav.payment_list: '決済状況一覧'
 
 # flash messages
-stripe.admin.save.success: 登録しました。
-stripe.admin.save.failed: 登録に失敗しました。
-stripe.admin.order.cancel.success: 取消処理を行いました。
-stripe.admin.order.change_price.success: 取消処理を行いました。
-stripe.admin.payment_status.bulk_action.success: %count%件を処理しました。
+stripe.admin.save.success: '登録しました。'
+stripe.admin.save.failed: '登録に失敗しました。'
+stripe.admin.order.cancel.success: '取消処理を行いました。'
+stripe.admin.order.change_price.success: '取消処理を行いました。'
+stripe.admin.payment_status.bulk_action.success: '%count%件を処理しました。'
 
 # twig
-stripe.admin.config.title: Stripe
-stripe.admin.config.sub_title: プラグイン一覧
-stripe.admin.config.header: 設定
-stripe.admin.config.save: 登録
-stripe.admin.config.required: 必須
-stripe.admin.config.back: プラグイン一覧
-stripe.admin.config.capture: 決済処理方法
-stripe.admin.config.api_url: API URL
-stripe.admin.config.api_id: API ID
-stripe.admin.config.api_password: API パスワード
-stripe.admin.order_edit.title: 決済情報
-stripe.admin.order_edit.cvs_title: コンビニ決済情報
-stripe.admin.order_edit.payment_status: 決済種別
-stripe.admin.order_edit.cvs_payment_status: コンビニ決済状況
-stripe.admin.order_edit.cvs_type: コンビニ種別
-stripe.admin.order_edit.payment_action: 決済操作
-stripe.admin.order_edit.payment_action_cancel: 取消実行
-stripe.admin.order_edit.payment_action_change_price: 金額変更
-stripe.admin.payment_status.title: 決済状況一覧
-stripe.admin.payment_status.sub_title: 受注管理
-stripe.admin.payment_status.search: 検索
-stripe.admin.payment_status.search_result_count: 検索結果：%count%件が該当しました
-stripe.admin.payment_status.search_condition_payment: 支払方法
-stripe.admin.payment_status.search_condition_order_status: 対応状況
-stripe.admin.payment_status.search_condition_payment_status: 決済状況
-stripe.admin.payment_status.invalid_condition: 検索条件に誤りがあります
-stripe.admin.payment_status.no_result: 検索条件に合致するデータが見つかりませんでした
-stripe.admin.payment_status.change_condition: 検索条件を変えて、再度検索をお試しください。
+stripe.admin.config.title: 'Stripe管理'
+stripe.admin.config.sub_title: 'プラグイン一覧'
+stripe.admin.config.header: '設定'
+stripe.admin.config.save: '登録'
+stripe.admin.config.required: '必須'
+stripe.admin.config.back: 'プラグイン一覧'
+stripe.admin.config.capture: '決済処理方法'
+stripe.admin.config.api_url: 'API URL'
+stripe.admin.config.api_id: 'API ID'
+stripe.admin.config.api_password: 'API パスワード'
+stripe.admin.order_edit.title: '決済情報'
+stripe.admin.order_edit.cvs_title: 'コンビニ決済情報'
+stripe.admin.order_edit.payment_status: '決済種別'
+stripe.admin.order_edit.cvs_payment_status: 'コンビニ決済状況'
+stripe.admin.order_edit.cvs_type: 'コンビニ種別'
+stripe.admin.order_edit.payment_action: '決済操作'
+stripe.admin.order_edit.payment_action_cancel: '取消実行'
+stripe.admin.order_edit.payment_action_change_price: '金額変更'
+stripe.admin.payment_status.title: '決済状況一覧'
+stripe.admin.payment_status.sub_title: '受注管理'
+stripe.admin.payment_status.search: '検索'
+stripe.admin.payment_status.search_result_count: '検索結果：%count%件が該当しました'
+stripe.admin.payment_status.search_condition_payment: '支払方法'
+stripe.admin.payment_status.search_condition_order_status: '対応状況'
+stripe.admin.payment_status.search_condition_payment_status: '決済状況'
+stripe.admin.payment_status.invalid_condition: '検索条件に誤りがあります'
+stripe.admin.payment_status.no_result: '検索条件に合致するデータが見つかりませんでした'
+stripe.admin.payment_status.change_condition: '検索条件を変えて、再度検索をお試しください。'
 stripe.admin.payment_status.display_count: '%count%件'
-stripe.admin.payment_status.col_order_date: 受注日時
-stripe.admin.payment_status.col_order_no: 注文番号
-stripe.admin.payment_status.col_order_name: お名前
-stripe.admin.payment_status.col_order_payment: 支払方法
-stripe.admin.payment_status.col_order_price: 購入金額
-stripe.admin.payment_status.col_order_staus: 対応状況
-stripe.admin.payment_status.bulk_label: 一括操作
-stripe.admin.payment_status.bulk_submit: 決定
-stripe.admin.payment_status.bulk_modal_title: 一括操作の確認
-stripe.admin.payment_status.bulk_modal_body: 複数の項目を変更します。実行してよろしいですか
-stripe.admin.payment_status.bulk_modal_action_exec: 実行
-stripe.admin.payment_status.bulk_modal_action_cancel: キャンセル
-stripe.admin.payment_status.bulk_alert: 選択されていません
-stripe.shopping.checkout.error: カード決済に失敗しました。
-stripe.shopping.verify.error: カードを利用することができません。
-stripe.shopping.cvs.error: コンビニ決済に失敗しました。
+stripe.admin.payment_status.col_order_date: '受注日時'
+stripe.admin.payment_status.col_order_no: '注文番号'
+stripe.admin.payment_status.col_order_name: 'お名前'
+stripe.admin.payment_status.col_order_payment: '支払方法'
+stripe.admin.payment_status.col_order_price: '購入金額'
+stripe.admin.payment_status.col_order_staus: '対応状況'
+stripe.admin.payment_status.bulk_label: '一括操作'
+stripe.admin.payment_status.bulk_submit: '決定'
+stripe.admin.payment_status.bulk_modal_title: '一括操作の確認'
+stripe.admin.payment_status.bulk_modal_body: '複数の項目を変更します。実行してよろしいですか'
+stripe.admin.payment_status.bulk_modal_action_exec: '実行'
+stripe.admin.payment_status.bulk_modal_action_cancel: 'キャンセル'
+stripe.admin.payment_status.bulk_alert: '選択されていません'
+stripe.shopping.checkout.error: 'カード決済に失敗しました。'
+stripe.shopping.verify.error: 'カードを利用することができません。'
+stripe.shopping.cvs.error: 'コンビニ決済に失敗しました。'
+
+
+stripe.admin.nav.config: '設定'
+stripe.admin.caputure.actual_sales: '仮実同時処理'
+stripe.admin.caputure.provisional_sales: '仮売上処理'

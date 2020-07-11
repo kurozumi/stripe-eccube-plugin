@@ -17,8 +17,8 @@ class ConfigType extends AbstractType
         $builder
             ->add('capture', ChoiceType::class, [
                 'choices' => [
-                    '仮実同時処理' => true,
-                    '仮売上処理' => false
+                    trans('stripe.admin.caputure.actual_sales') => true,
+                    trans('stripe.admin.caputure.provisional_sales') => false
                 ],
                 'expanded' => false,
                 'multiple' => false,

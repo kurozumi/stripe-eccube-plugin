@@ -22,6 +22,16 @@ class Nav implements EccubeNav
                         'url' => 'stripe_admin_payment_status'
                     ]
                 ]
+            ],
+            'stripe' => [
+                'name' => 'stripe.admin.config.title',
+                'icon' => 'fa-cc-stripe',
+                'children' => [
+                    'stripe_admin_config' => [
+                        'name' => 'stripe.admin.nav.config',
+                        'url' => 'stripe4_admin_config'
+                    ]
+                ]
             ]
         ];
     }

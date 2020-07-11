@@ -131,9 +131,15 @@ class CreditCard implements PaymentMethodInterface
             $OrderStatus = $this->orderStatusRepository->find(OrderStatus::NEW);
             $this->Order->setOrderStatus($OrderStatus);
 
-            // 決済ステータスを実売上へ変更
-            $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::ACTUAL_SALES);
-            $this->Order->setStripePaymentStatus($PaymentStatus);
+            if ($this->config->getCapture()) {
+                // 決済ステータスを実売上へ変更
+                $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::ACTUAL_SALES);
+                $this->Order->setStripePaymentStatus($PaymentStatus);
+            } else {
+                // 決済ステータスを仮売上へ変更
+                $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::PROVISIONAL_SALES);
+                $this->Order->setStripePaymentStatus($PaymentStatus);
+            }
 
             // Stripeの課金IDを保存
             $this->Order->setStripeChargeId($charge['id']);
@@ -152,6 +158,7 @@ class CreditCard implements PaymentMethodInterface
             $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::OUTSTANDING);
             $this->Order->setStripePaymentStatus($PaymentStatus);
 
+            // purchaseFlow::rollbackを呼び出し, 購入処理をロールバックする。
             $this->purchaseFlow->rollback($this->Order, new PurchaseContext());
 
             log_error(sprintf("%s: %s", CreditCard::class, $e->getMessage()));
