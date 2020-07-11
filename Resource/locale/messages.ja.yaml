@@ -9,12 +9,13 @@ stripe.admin.order.change_price.success: 取消処理を行いました。
 stripe.admin.payment_status.bulk_action.success: %count%件を処理しました。
 
 # twig
-stripe.admin.config.title: サンプル決済
+stripe.admin.config.title: Stripe
 stripe.admin.config.sub_title: プラグイン一覧
 stripe.admin.config.header: 設定
 stripe.admin.config.save: 登録
 stripe.admin.config.required: 必須
 stripe.admin.config.back: プラグイン一覧
+stripe.admin.config.capture: 決済処理方法
 stripe.admin.config.api_url: API URL
 stripe.admin.config.api_id: API ID
 stripe.admin.config.api_password: API パスワード
@@ -36,7 +37,7 @@ stripe.admin.payment_status.search_condition_payment_status: 決済状況
 stripe.admin.payment_status.invalid_condition: 検索条件に誤りがあります
 stripe.admin.payment_status.no_result: 検索条件に合致するデータが見つかりませんでした
 stripe.admin.payment_status.change_condition: 検索条件を変えて、再度検索をお試しください。
-stripe.admin.payment_status.display_count: %count%件
+stripe.admin.payment_status.display_count: '%count%件'
 stripe.admin.payment_status.col_order_date: 受注日時
 stripe.admin.payment_status.col_order_no: 注文番号
 stripe.admin.payment_status.col_order_name: お名前

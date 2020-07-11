@@ -13,7 +13,9 @@ use Eccube\Service\Payment\PaymentMethodInterface;
 use Eccube\Service\Payment\PaymentResult;
 use Eccube\Service\PurchaseFlow\PurchaseContext;
 use Eccube\Service\PurchaseFlow\PurchaseFlow;
+use Plugin\Stripe4\Entity\Config;
 use Plugin\Stripe4\Entity\PaymentStatus;
+use Plugin\Stripe4\Repository\ConfigRepository;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Stripe\Charge;
 use Stripe\Customer;
@@ -37,34 +39,41 @@ class CreditCard implements PaymentMethodInterface
     /**
      * @var OrderStatusRepository
      */
-    private $orderStatusRepository;
+    protected $orderStatusRepository;
 
     /**
      * @var PaymentStatusRepository
      */
-    private $paymentStatusRepository;
+    protected $paymentStatusRepository;
 
     /**
      * @var PurchaseFlow
      */
-    private $purchaseFlow;
+    protected $purchaseFlow;
 
     /**
      * @var EccubeConfig
      */
-    private $eccubeConfig;
+    protected $eccubeConfig;
+
+    /**
+     * @var Config
+     */
+    protected $config;
 
     public function __construct(
         OrderStatusRepository $orderStatusRepository,
         PaymentStatusRepository $paymentStatusRepository,
         PurchaseFlow $shoppingPurchaseFlow,
-        EccubeConfig $eccubeConfig
+        EccubeConfig $eccubeConfig,
+        ConfigRepository $configRepository
     )
     {
         $this->orderStatusRepository = $orderStatusRepository;
         $this->paymentStatusRepository = $paymentStatusRepository;
         $this->purchaseFlow = $shoppingPurchaseFlow;
         $this->eccubeConfig = $eccubeConfig;
+        $this->config = $configRepository->get();
 
         Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
     }
@@ -115,6 +124,7 @@ class CreditCard implements PaymentMethodInterface
                 'amount' => $this->Order->getPaymentTotal(),
                 'currency' => $this->eccubeConfig['currency'],
                 "source" => $token,
+                "capture" => $this->config->getCapture()
             ]);
 
             // 受注ステータスを新規受付へ変更

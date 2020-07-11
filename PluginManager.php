@@ -7,7 +7,9 @@ namespace Plugin\Stripe4;
 use Eccube\Entity\Payment;
 use Eccube\Plugin\AbstractPluginManager;
 use Eccube\Repository\PaymentRepository;
+use Plugin\Stripe4\Entity\Config;
 use Plugin\Stripe4\Entity\PaymentStatus;
+use Plugin\Stripe4\Repository\ConfigRepository;
 use Plugin\Stripe4\Service\Method\CreditCard;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -15,6 +17,19 @@ class PluginManager extends AbstractPluginManager
 {
     public function enable(array $meta, ContainerInterface $container)
     {
+        $entityManager = $container->get('doctrine.orm.entity_manager');
+
+        /** @var ConfigRepository $configRepository */
+        $configRepository = $entityManager->getRepository(Config::class);
+
+        $Config = $configRepository->get();
+        if(null === $Config) {
+            $Config = new Config();
+            $Config->setCapture(true);
+            $entityManager->persist($Config);
+            $entityManager->flush();
+        }
+
         $this->createTokenPayment($container);
         $this->createPaymentStatuses($container);
     }
@@ -22,7 +37,7 @@ class PluginManager extends AbstractPluginManager
     private function createTokenPayment(ContainerInterface $container)
     {
         $entityManager = $container->get('doctrine.orm.entity_manager');
-        $paymentRepository = $container->get(PaymentRepository::class);
+        $paymentRepository = $entityManager->getRepository(Payment::class);
 
         $Payment = $paymentRepository->findOneBy([], ['sort_no' => 'DESC']);
         $sortNo = $Payment ? $Payment->getSortNo() + 1 : 1;
@@ -49,7 +64,7 @@ class PluginManager extends AbstractPluginManager
         $i = 0;
         foreach ($statuses as $id => $name) {
             $PaymentStatus = $entityManager->find($class, $id);
-            if(!$PaymentStatus) {
+            if (!$PaymentStatus) {
                 $PaymentStatus = new $class;
             }
             $PaymentStatus->setId($id);
@@ -65,7 +80,7 @@ class PluginManager extends AbstractPluginManager
         $statuses = [
             PaymentStatus::OUTSTANDING => '未決済',
             PaymentStatus::ENABLED => '有効性チェック済',
-            PaymentStatus::PROVISIONAL_SALES => '決済完了',
+            PaymentStatus::PROVISIONAL_SALES => '仮売上',
             PaymentStatus::ACTUAL_SALES => '実売上',
             PaymentStatus::CANCEL => 'キャンセル'
         ];
