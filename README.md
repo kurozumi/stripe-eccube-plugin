@@ -32,14 +32,6 @@ Shopping/index.twigに以下のタグを追記してください。
 {{ include('@Stripe4/credit.twig', ignore_missing=true) }}
 ```
 
-## Shopping/confirm.twigにタグを追記
-
-Shopping/confirm.twigに以下のタグを追記してください。
-
-```
-{{ include('@Stripe4/credit_confirm.twig', ignore_missing=true) }}
-```
-
 以上で設定は終了です。
 お疲れさまでした。
 
