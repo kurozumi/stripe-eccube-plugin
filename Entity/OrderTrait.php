@@ -27,21 +27,7 @@ trait OrderTrait
      * @var string
      * @ORM\Column(type="string", nullable=true)
      */
-    private $stripe_token;
-
-    /**
-     * @var string
-     * @ORM\Column(type="string", nullable=true)
-     */
-    private $stripe_charge_id;
-
-    /**
-     * クレジットカード番号の末尾4桁
-     *
-     * @var string
-     * @ORM\Column(type="string", nullable=true)
-     */
-    private $stripe_card_no_last4;
+    private $stripe_payment_intent_id;
 
     /**
      * @var PaymentStatus
@@ -53,56 +39,18 @@ trait OrderTrait
     /**
      * @return string|null
      */
-    public function getStripeToken(): ?string
+    public function getStripePaymentIntentId(): ?string
     {
-        return $this->stripe_token;
+        return $this->stripe_payment_intent_id;
     }
 
     /**
-     * @param string|null $stripe_token
+     * @param string|null $stripe_payment_intent_id
      * @return $this
      */
-    public function setStripeToken(?string $stripe_token): self
+    public function setStripePaymentIntentId(?string $stripe_payment_intent_id): self
     {
-        $this->stripe_token = $stripe_token;
-
-        return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getStripeChargeId(): ?string
-    {
-        return $this->stripe_charge_id;
-    }
-
-    /**
-     * @param string|null $stripe_charge_id
-     * @return $this
-     */
-    public function setStripeChargeId(?string $stripe_charge_id): self
-    {
-        $this->stripe_charge_id = $stripe_charge_id;
-
-        return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getStripeCardNoLast4(): ?string
-    {
-        return $this->stripe_card_no_last4;
-    }
-
-    /**
-     * @param string|null $stripe_card_no_last4
-     * @return $this
-     */
-    public function setStripeCardNoLast4(?string $stripe_card_no_last4): self
-    {
-        $this->stripe_card_no_last4 = $stripe_card_no_last4;
+        $this->stripe_payment_intent_id = $stripe_payment_intent_id;
 
         return $this;
     }

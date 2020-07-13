@@ -17,6 +17,7 @@ use Eccube\Entity\Order;
 use Eccube\Form\Type\Shopping\OrderType;
 use Plugin\Stripe4\Service\Method\CreditCard;
 use Symfony\Component\Form\AbstractTypeExtension;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -38,12 +39,22 @@ class CreditCardExtension extends AbstractTypeExtension
                 $order = $event->getData();
 
                 if ($order->getPayment()->getMethodClass() === CreditCard::class) {
-                    $form->add('stripe_token', HiddenType::class, [
-                        'mapped' => true,
-                        'constraints' => [
-                            new NotBlank()
-                        ]
-                    ]);
+                    $form
+                        ->add('stripe_payment_intent_id', HiddenType::class, [
+                            'mapped' => true,
+                            'constraints' => [
+                                new NotBlank()
+                            ]
+                        ])
+                        ->add('is_saving_card', ChoiceType::class, [
+                            'mapped' => false,
+                            'choices' => [
+                                'カード情報を保存する' => true,
+                            ],
+                            'expanded' => true,
+                            'multiple' => true
+                        ])
+                    ;
                 }
             });
     }

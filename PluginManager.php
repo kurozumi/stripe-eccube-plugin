@@ -25,6 +25,13 @@ class PluginManager extends AbstractPluginManager
 {
     public function enable(array $meta, ContainerInterface $container)
     {
+        $this->createConfig($container);
+        $this->createPayment($container, 'クレジットカード決済', CreditCard::class);
+        $this->createPaymentStatuses($container);
+    }
+
+    private function createConfig(ContainerInterface $container)
+    {
         $entityManager = $container->get('doctrine.orm.entity_manager');
 
         /** @var ConfigRepository $configRepository */
@@ -37,12 +44,9 @@ class PluginManager extends AbstractPluginManager
             $entityManager->persist($Config);
             $entityManager->flush();
         }
-
-        $this->createTokenPayment($container);
-        $this->createPaymentStatuses($container);
     }
 
-    private function createTokenPayment(ContainerInterface $container)
+    private function createPayment(ContainerInterface $container, $method, $methodClass)
     {
         $entityManager = $container->get('doctrine.orm.entity_manager');
         $paymentRepository = $entityManager->getRepository(Payment::class);
@@ -50,7 +54,7 @@ class PluginManager extends AbstractPluginManager
         $Payment = $paymentRepository->findOneBy([], ['sort_no' => 'DESC']);
         $sortNo = $Payment ? $Payment->getSortNo() + 1 : 1;
 
-        $Payment = $paymentRepository->findOneBy(['method_class' => CreditCard::class]);
+        $Payment = $paymentRepository->findOneBy(['method_class' => $methodClass]);
         if ($Payment) {
             return;
         }
@@ -59,8 +63,8 @@ class PluginManager extends AbstractPluginManager
         $Payment->setCharge(0);
         $Payment->setSortNo($sortNo);
         $Payment->setVisible(true);
-        $Payment->setMethod("Stripe");
-        $Payment->setMethodClass(CreditCard::class);
+        $Payment->setMethod($method);
+        $Payment->setMethodClass($methodClass);
 
         $entityManager->persist($Payment);
         $entityManager->flush();
@@ -95,4 +99,8 @@ class PluginManager extends AbstractPluginManager
         $this->createMasterData($container, $statuses, PaymentStatus::class);
     }
 
+    public function createSubscriptionStatuses(ContainerInterface $container)
+    {
+
+    }
 }

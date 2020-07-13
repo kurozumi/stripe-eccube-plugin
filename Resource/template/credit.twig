@@ -6,29 +6,23 @@
     <div class="ec-orderPayment">
         <div class="ec-rectHeading">
             <h2>クレジットカード情報</h2>
-            <div class="ec-input">
-                <script src="https://js.stripe.com/v3/"></script>
-                <div class="form-row">
-                    <div class="form-group">
-                        <div id="card-number" class="form-control">
-                            <!-- ここにクレジットカード番号入力欄が挿入される -->
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div id="card-expiry" class="form-control">
-                            <!-- ここにクレジットカード有効期限入力欄が挿入される -->
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div id="card-cvc" class="form-control">
-                            <!-- ここにクレジットカードセキュリティ番号入力欄が挿入される -->
-                        </div>
-                    </div>
 
-                    <!-- ここにエラーメッセージが表示される -->
-                    <div id="card-errors" role="alert"></div>
+            <script src="https://js.stripe.com/v3/"></script>
+            <div class="form-row">
+                <div class="form-group">
+                    <div id="card" class="form-control">
+                        <!-- ここにクレジットカード番号入力欄が挿入される -->
+                    </div>
                 </div>
-                {{ form_widget(form.stripe_token) }}
+
+                <div class="ec-radio">
+                    {{ form_widget(form.is_saving_card) }}
+                </div>
+
+                <!-- ここにエラーメッセージが表示される -->
+                <div id="card-errors" class="text-danger small mb-lg-5" role="alert"></div>
+
+                {{ form_widget(form.stripe_payment_intent_id) }}
             </div>
         </div>
 
@@ -53,37 +47,13 @@
             };
 
             // クレジットカード情報入力欄の構築
-            const cardNumber = elements.create('cardNumber', {style: style, placeholder: 'カード番号 1111 1111 1111 1111'});
-            cardNumber.mount("#card-number");
-
-            const cardExpiry = elements.create('cardExpiry', {style: style, placeholder: '有効期限　MM/YY'});
-            cardExpiry.mount("#card-expiry");
-
-            const cardCvc = elements.create('cardCvc', {style: style, placeholder: 'セキュリティ番号'});
-            cardCvc.mount("#card-cvc");
+            const card = elements.create('card', {style: style, hidePostalCode: true});
+            card.mount("#card");
 
             // 入力変更時のリスナー
             // バリデーションメッセージを表示する
-            cardNumber.addEventListener('change', function(event) {
-                var displayError = document.getElementById('card-errors');
-                if (event.error) {
-                    displayError.textContent = event.error.message;
-                } else {
-                    displayError.textContent = '';
-                }
-            });
-
-            cardExpiry.addEventListener('change', function(event) {
-                var displayError = document.getElementById('card-errors');
-                if (event.error) {
-                    displayError.textContent = event.error.message;
-                } else {
-                    displayError.textContent = '';
-                }
-            });
-
-            cardCvc.addEventListener('change', function(event) {
-                var displayError = document.getElementById('card-errors');
+            card.addEventListener('change', function (event) {
+                const displayError = document.getElementById('card-errors');
                 if (event.error) {
                     displayError.textContent = event.error.message;
                 } else {
@@ -94,43 +64,95 @@
             window.addEventListener("load", stripeCheckoutHandler, false);
 
             function stripeCheckoutHandler(e) {
-                var selector = '#shopping-form > div > div.ec-orderRole__summary > div > div.ec-totalBox__btn > button';
-                var jsInitCheckTimer = setInterval(jsLoaded, 1000);
+                const selector = '#shopping-form > div > div.ec-orderRole__summary > div > div.ec-totalBox__btn > button';
+                const jsInitCheckTimer = setInterval(jsLoaded, 1000);
+
                 function jsLoaded() {
                     if (document.querySelector(selector) != null) {
                         clearInterval(jsInitCheckTimer);
                     }
                     // submit時のリスナー
                     var button = document.querySelector(selector);
-                    button.addEventListener('click', function(event) {
+                    button.addEventListener('click', async (event) => {
                         event.preventDefault();
 
-                        // Stripeサーバにクレジットカード情報を送信してクレジットカードトークンを取得する
-                        stripe.createToken(cardNumber).then(function(result) {
-                            if (result.error) {
-                                var errorElement = document.getElementById('card-errors');
-                                errorElement.textContent = result.error.message;
-                                var overlay = document.querySelector('.bg-load-overlay');
-                                overlay.remove();
-                            } else {
-                                // クレジットカードトークンをサーバにsubmitする
-                                stripeTokenHandler(result.token);
-                                setTimeout(function() {
-                                    var form = document.getElementById('shopping-form');
-                                    form.submit();
-                                }, 1000);
-                            }
-                        });
+                        const isSavingCard = $('#{{ form.is_saving_card.vars.id }} input[type="checkbox"]').is(":checked");
+
+                        stripePaymentHandler(card, isSavingCard);
                     });
                 }
             }
 
-            function stripeTokenHandler(token) {
-                var form = document.getElementById('shopping-form');
+            function stripePaymentHandler(card, isSavingCard) {
+                stripe
+                    .createPaymentMethod({
+                        type: 'card',
+                        card: card,
+                        billing_details: {
 
-                var stripe_token = document.getElementById('{{ form.stripe_token.vars.id }}');
-                stripe_token.setAttribute('value', token.id);
+                        }
+                    })
+                    .then( async (result) => {
+                        if (result.error) {
+                            showStripeErrorMessage(result.error.message);
+                        } else {
+                            return await fetch("{{ url("stripe_payment") }}", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-Requested-With": "XMLHttpRequest"
+                                },
+                                body: JSON.stringify({
+                                    paymentMethodId: result.paymentMethod.id,
+                                    isSavingCard: isSavingCard ? true : false
+                                })
+                            });
+                        }
+                    })
+                    .then((result) => {
+                        const overlay = document.querySelector('.bg-load-overlay');
+                        overlay.remove();
+                        return result.json()
+                    })
+                    .then((paymentData) => {
+                        if (paymentData.requiresAction) {
+                            stripeHandleAction(paymentData.clientSecret);
+                        } else if (paymentData.error) {
+                            showStripeErrorMessage(paymentData.error)
+                        } else {
+                            redirectToHomepage(paymentData.clientSecret)
+                        }
+                    })
             }
+
+            function stripeHandleAction(clientSecret) {
+                stripe
+                    .confirmCardPayment(clientSecret)
+                    .then((result) => {
+                        loadingOverlay();
+                        if (result.error) {
+                            showStripeErrorMessage(result.error.message)
+                        } else {
+                            setTimeout(function () {
+                                const form = document.getElementById('shopping-form');
+                                $('#{{ form.stripe_payment_intent_id.vars.id }}').val(result.paymentIntent.id)
+                                form.submit();
+                            }, 1000);
+                        }
+                    });
+            }
+
+            function redirectToHomepage(clientSecret) {
+                location.href = '{{ url('homepage') }}';
+            }
+
+            function showStripeErrorMessage(message) {
+                const errorElement = document.getElementById('card-errors');
+                errorElement.textContent = message;
+                const overlay = document.querySelector('.bg-load-overlay');
+                overlay.remove();
+            }
+
         </script>
     </div>
 {% endif %}
