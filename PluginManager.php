@@ -94,7 +94,8 @@ class PluginManager extends AbstractPluginManager
             PaymentStatus::ENABLED => '有効性チェック済',
             PaymentStatus::PROVISIONAL_SALES => '仮売上',
             PaymentStatus::ACTUAL_SALES => '実売上',
-            PaymentStatus::CANCEL => '返金'
+            PaymentStatus::CANCEL => 'キャンセル',
+            PaymentStatus::REFUND => '返金'
         ];
         $this->createMasterData($container, $statuses, PaymentStatus::class);
     }

@@ -48,4 +48,9 @@ class PaymentStatus extends AbstractMasterEntity
      * キャンセル
      */
     const CANCEL = 5;
+
+    /**
+     * 返金
+     */
+    const REFUND = 6;
 }

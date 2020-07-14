@@ -47,6 +47,7 @@ class PaymentStatusController extends AbstractController
     protected $bulkActions = [
         ['id' => 1, 'name' => '一括売上'],
         ['id' => 2, 'name' => '一括返金'],
+        ['id' => 3, 'name' => '一括取消']
     ];
 
     /**
@@ -228,6 +229,8 @@ class PaymentStatusController extends AbstractController
         $orders = $this->orderRepository->findBy(['id' => $request->get('ids')]);
         /** @var PaymentStatus $actualSales */
         $actualSales = $this->paymentStatusRepository->find(PaymentStatus::ACTUAL_SALES);
+        /** @var PaymentStatus $refund */
+        $refund = $this->paymentStatusRepository->find(PaymentStatus::REFUND);
         /** @var PaymentStatus $cancel */
         $cancel = $this->paymentStatusRepository->find(PaymentStatus::CANCEL);
 
@@ -250,6 +253,13 @@ class PaymentStatusController extends AbstractController
                         Refund::create([
                             "payment_intent" => $order->getStripePaymentIntentId()
                         ]);
+                        // 決済ステータスを返金に変更
+                        $order->setStripePaymentStatus($refund);
+                        break;
+                    // 一括取消
+                    case 3:
+                        // 未キャプチャの支払いを取消
+                        PaymentIntent::retrieve($order->getStripePaymentIntentId())->cancel();
                         // 決済ステータスをキャンセルに変更
                         $order->setStripePaymentStatus($cancel);
                         break;
@@ -263,11 +273,11 @@ class PaymentStatusController extends AbstractController
             }
         }
 
-        if($success) {
+        if ($success) {
             $this->addSuccess(trans('stripe.admin.payment_status.bulk_action.success', ['%count%' => $success]), 'admin');
         }
 
-        if($errors) {
+        if ($errors) {
             $this->addError(trans('stripe.admin.payment_status.bulk_action.error', ['%count%' => $errors]), 'admin');
         }
 
