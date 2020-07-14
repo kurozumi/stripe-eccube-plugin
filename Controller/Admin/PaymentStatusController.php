@@ -29,6 +29,7 @@ use Plugin\Stripe4\Form\Type\Admin\SearchPaymentType;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Stripe\Charge;
+use Stripe\PaymentIntent;
 use Stripe\Refund;
 use Stripe\Stripe;
 use Symfony\Component\HttpFoundation\Request;
@@ -239,7 +240,7 @@ class PaymentStatusController extends AbstractController
                     // 一括売上
                     case 1:
                         // 実売上処理
-                        Charge::retrieve($order->getStripeChargeId())->capture();
+                        PaymentIntent::retrieve($order->getStripePaymentIntentId())->capture();
                         // 決済ステータスを実売上に変更
                         $order->setStripePaymentStatus($actualSales);
                         break;
@@ -247,7 +248,7 @@ class PaymentStatusController extends AbstractController
                     case 2:
                         // 払い戻し処理
                         Refund::create([
-                            "charge" => $order->getStripeChargeId()
+                            "payment_intent" => $order->getStripePaymentIntentId()
                         ]);
                         // 決済ステータスをキャンセルに変更
                         $order->setStripePaymentStatus($cancel);
