@@ -88,11 +88,9 @@
                     .createPaymentMethod({
                         type: 'card',
                         card: card,
-                        billing_details: {
-
-                        }
+                        billing_details: {}
                     })
-                    .then( async (result) => {
+                    .then(async (result) => {
                         if (result.error) {
                             showStripeErrorMessage(result.error.message);
                         } else {
@@ -100,16 +98,18 @@
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",
-                                    "X-Requested-With": "XMLHttpRequest"
+                                    "X-Requested-With": "XMLHttpRequest",
+                                    "ECCUBE-CSRF-TOKEN": "{{ csrf_token(constant('Eccube\\Common\\Constant::TOKEN_NAME')) }}"
                                 },
                                 body: JSON.stringify({
                                     paymentMethodId: result.paymentMethod.id,
-                                    isSavingCard: isSavingCard ? true : false
+                                    isSavingCard: isSavingCard ? true : false,
                                 })
                             });
                         }
                     })
                     .then((result) => {
+                        // ここらへんで3Dセキュアのモーダルが表示されるので一旦オーバーレイ解除
                         const overlay = document.querySelector('.bg-load-overlay');
                         overlay.remove();
                         return result.json()
@@ -133,11 +133,9 @@
                         if (result.error) {
                             showStripeErrorMessage(result.error.message)
                         } else {
-                            setTimeout(function () {
-                                const form = document.getElementById('shopping-form');
-                                $('#{{ form.stripe_payment_intent_id.vars.id }}').val(result.paymentIntent.id)
-                                form.submit();
-                            }, 1000);
+                            $('#{{ form.stripe_payment_intent_id.vars.id }}').val(result.paymentIntent.id)
+                            const form = document.getElementById('shopping-form');
+                            form.submit();
                         }
                     });
             }

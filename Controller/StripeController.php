@@ -65,6 +65,14 @@ class StripeController extends AbstractController
             throw new BadRequestHttpException();
         }
 
+        $this->isTokenValid();
+
+        $input = file_get_contents('php://input');
+        $body = json_decode($input, true);
+
+        $paymentMethodId = $body['paymentMethodId'];
+        $isSavingCard = $body['isSavingCard'];
+
         $preOrderId = $this->cartService->getPreOrderId();
         $Order = $this->orderHelper->getPurchaseProcessingOrder($preOrderId);
 
@@ -74,16 +82,11 @@ class StripeController extends AbstractController
             ]);
         }
 
-        $input = file_get_contents('php://input');
-        $body = json_decode($input, true);
-
-        $paymentMethodId = $body['paymentMethodId'];
-        $isSavingCard = $body['isSavingCard'];
-
         try {
             if (null !== $paymentMethodId) {
-                $payment_intent_data = [
-                    "amount" => (int) $Order->getPaymentTotal(),
+                $paymentIntentId = $Order->getStripePaymentIntentId();
+                $paymentIntentData = [
+                    "amount" => (int)$Order->getPaymentTotal(),
                     "currency" => $this->eccubeConfig["currency"],
                     "payment_method" => $paymentMethodId,
                     "capture_method" => "manual",
@@ -91,11 +94,13 @@ class StripeController extends AbstractController
 
                 if ($isSavingCard) {
                     $customer = Customer::create();
-                    $payment_intent_data['customer'] = $customer->id;
-                    $payment_intent_data['setup_future_usage'] = 'off_session';
+                    $paymentIntentData['customer'] = $customer->id;
+                    $paymentIntentData['setup_future_usage'] = 'off_session';
                 }
 
-                $intent = PaymentIntent::create($payment_intent_data);
+                $intent = PaymentIntent::create($paymentIntentData);
+            } else {
+                throw new CardException();
             }
         } catch (\Exception $e) {
             return $this->json([

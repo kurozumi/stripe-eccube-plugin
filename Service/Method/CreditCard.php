@@ -139,7 +139,6 @@ class CreditCard implements PaymentMethodInterface
         $result = new PaymentResult();
 
         try {
-            log_info(sprintf("%s::create", PaymentIntent::class));
             $intent = PaymentIntent::retrieve($this->Order->getStripePaymentIntentId());
 
             // 受注ステータスを新規受付へ変更
