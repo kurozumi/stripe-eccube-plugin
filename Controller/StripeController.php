@@ -84,7 +84,12 @@ class StripeController extends AbstractController
 
         try {
             if (null !== $paymentMethodId) {
+                // paymentIntentIdが登録されていたらキャンセル処理
                 $paymentIntentId = $Order->getStripePaymentIntentId();
+                if ($paymentIntentId) {
+                    PaymentIntent::retrieve($paymentIntentId)->cancel();
+                }
+
                 $paymentIntentData = [
                     "amount" => (int)$Order->getPaymentTotal(),
                     "currency" => $this->eccubeConfig["currency"],
