@@ -17,6 +17,7 @@ use Eccube\Common\EccubeConfig;
 use Eccube\Controller\AbstractController;
 use Eccube\Service\CartService;
 use Eccube\Service\OrderHelper;
+use Plugin\Stripe4\Repository\TeamRepository;
 use Stripe\Customer;
 use Stripe\Exception\CardException;
 use Stripe\PaymentIntent;
@@ -43,15 +44,22 @@ class StripeController extends AbstractController
      */
     private $orderHelper;
 
+    /**
+     * @var TeamRepository
+     */
+    private $teamRepository;
+
     public function __construct(
         CartService $cartService,
         OrderHelper $orderHelper,
-        EccubeConfig $eccubeConfig
+        EccubeConfig $eccubeConfig,
+        TeamRepository $teamRepository
     )
     {
         $this->cartService = $cartService;
         $this->orderHelper = $orderHelper;
         $this->eccubeConfig = $eccubeConfig;
+        $this->teamRepository = $teamRepository;
 
         Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
     }
@@ -71,6 +79,7 @@ class StripeController extends AbstractController
         $body = json_decode($input, true);
 
         $paymentMethodId = $body['paymentMethodId'];
+        $stripeCustomer = $body['stripeCustomer'];
         $isSavingCard = $body['isSavingCard'];
 
         $preOrderId = $this->cartService->getPreOrderId();
@@ -97,10 +106,19 @@ class StripeController extends AbstractController
                     "capture_method" => "manual",
                 ];
 
-                if ($isSavingCard) {
-                    $customer = Customer::create();
-                    $paymentIntentData['customer'] = $customer->id;
+                /** @var \Eccube\Entity\Customer $Customer */
+                $Customer = $this->getUser();
+                if ($isSavingCard && $Customer) {
+                    $stripeCustomer = Customer::create([
+                        "email" => $Customer->getEmail()
+                    ]);
+                    $paymentIntentData['customer'] = $stripeCustomer->id;
+                    $paymentIntentData['payment_method'] = $paymentMethodId;
                     $paymentIntentData['setup_future_usage'] = 'off_session';
+                }
+
+                if($stripeCustomer) {
+                    $paymentIntentData['customer'] = $stripeCustomer;
                 }
 
                 $intent = PaymentIntent::create($paymentIntentData);

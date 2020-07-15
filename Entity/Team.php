@@ -37,7 +37,7 @@ if (!class_exists(Team::class)) {
         /**
          * @var Customer
          *
-         * @ORM\ManyToOne(targetEntity="Eccube\Entity\Customer")
+         * @ORM\ManyToOne(targetEntity="Eccube\Entity\Customer", inversedBy="Teams")
          */
         private $Customer;
 
@@ -51,7 +51,7 @@ if (!class_exists(Team::class)) {
         /**
          * @var string
          *
-         * @ORM\Column(type="string")
+         * @ORM\Column(type="string", nullable=true)
          */
         private $stripe_payment_method_id;
 
@@ -94,7 +94,7 @@ if (!class_exists(Team::class)) {
          * @param string $stripe_customer_id
          * @return $this
          */
-        public function setStripeCustomerId(string $stripe_customer_id)
+        public function setStripeCustomerId(string $stripe_customer_id): self
         {
             $this->stripe_customer_id = $stripe_customer_id;
 
@@ -102,18 +102,18 @@ if (!class_exists(Team::class)) {
         }
 
         /**
-         * @return string
+         * @return string|null
          */
-        public function getStripePaymentMethodId(): string
+        public function getStripePaymentMethodId(): ?string
         {
             return $this->stripe_payment_method_id;
         }
 
         /**
-         * @param string $stripe_payment_method_id
+         * @param string|null $stripe_payment_method_id
          * @return $this
          */
-        public function setStripePaymentMethodId(string $stripe_payment_method_id)
+        public function setStripePaymentMethodId(?string $stripe_payment_method_id): self
         {
             $this->stripe_payment_method_id = $stripe_payment_method_id;
 

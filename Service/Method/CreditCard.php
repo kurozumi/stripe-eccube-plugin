@@ -121,7 +121,12 @@ class CreditCard implements PaymentMethodInterface
         $this->Order->setStripePaymentStatus($PaymentStatus);
 
         $result = new PaymentResult();
-        $result->setSuccess(true);
+        if ($this->Order->getStripePaymentIntentId()) {
+            $result->setSuccess(true);
+        } else {
+            $result->setSuccess(false);
+        }
+
 
         return $result;
     }
