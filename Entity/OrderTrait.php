@@ -27,7 +27,7 @@ trait OrderTrait
      * @var string
      * @ORM\Column(type="string", nullable=true)
      */
-    private $stripe_payment_intent_id;
+    private $stripe_payment_method_id;
 
     /**
      * @var PaymentStatus
@@ -39,18 +39,18 @@ trait OrderTrait
     /**
      * @return string|null
      */
-    public function getStripePaymentIntentId(): ?string
+    public function getStripePaymentMethodId(): ?string
     {
-        return $this->stripe_payment_intent_id;
+        return $this->stripe_payment_method_id;
     }
 
     /**
-     * @param string|null $stripe_payment_intent_id
+     * @param string|null $stripe_payment_method_id
      * @return $this
      */
-    public function setStripePaymentIntentId(?string $stripe_payment_intent_id): self
+    public function setStripePaymentMethodId(?string $stripe_payment_method_id): self
     {
-        $this->stripe_payment_intent_id = $stripe_payment_intent_id;
+        $this->stripe_payment_method_id = $stripe_payment_method_id;
 
         return $this;
     }

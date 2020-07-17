@@ -17,20 +17,31 @@ use Doctrine\ORM\EntityRepository;
 use Eccube\Entity\Order;
 use Eccube\Form\Type\Shopping\OrderType;
 use Plugin\Stripe4\Entity\Team;
-use Plugin\Stripe4\Form\Type\TeamType;
 use Plugin\Stripe4\Service\Method\CreditCard;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 class CreditCardExtension extends AbstractTypeExtension
 {
+    /**
+     * @var SessionInterface
+     */
+    private $session;
+
+    public function __construct(
+        SessionInterface $session
+    )
+    {
+        $this->session = $session;
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         if ($options['skip_add_form']) {
@@ -46,7 +57,7 @@ class CreditCardExtension extends AbstractTypeExtension
 
                 if ($order->getPayment()->getMethodClass() === CreditCard::class) {
                     $form
-                        ->add('stripe_payment_intent_id', HiddenType::class, [
+                        ->add('stripe_payment_method_id', HiddenType::class, [
                             'mapped' => true,
                             'constraints' => [
                                 new NotBlank()
@@ -65,27 +76,45 @@ class CreditCardExtension extends AbstractTypeExtension
                         $form
                             ->add('stripe_customer', HiddenType::class, [
                                 'mapped' => false,
-                                'data' => $order->getCustomer()->getTeams() ? $order->getCustomer()->getTeams()->first()->getStripeCustomerId() : ''
+                                'data' => $order->getCustomer()->getTeams()->count() ? $order->getCustomer()->getTeams()->first()->getStripeCustomerId() : ''
                             ])
                             ->add('cards', EntityType::class, [
                                 'mapped' => false,
                                 'required' => false,
                                 'class' => Team::class,
-                                'query_builder' => function(EntityRepository $er) use($Customer) {
+                                'query_builder' => function (EntityRepository $er) use ($Customer) {
                                     return $er->createQueryBuilder("t")
                                         ->where("t.Customer = :Customer")
                                         ->setParameter("Customer", $Customer);
                                 },
-                                'choice_label' => function(Team $team) {
+                                'choice_label' => function (Team $team) {
                                     return $team->getStripePaymentMethodId();
                                 },
-                                'choice_value' => function(?Team $team) {
+                                'choice_value' => function (?Team $team) {
                                     return $team ? $team->getStripePaymentMethodId() : '';
                                 },
                                 'expanded' => true,
                                 'multiple' => false,
                                 'placeholder' => false
                             ]);
+                    }
+                }
+            });
+
+        $builder
+            ->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
+                /** @var FormBuilderInterface $form */
+                $form = $event->getForm();
+                /** @var Order $order */
+                $order = $event->getData();
+
+                if ($Customer = $order->getCustomer()) {
+                    $this->session->remove(CreditCard::IS_SAVING_CARD);
+                    if ($form->has('is_saving_card')) {
+                        $is_saving_card = $form->get('is_saving_card')->getData();
+                        if ($is_saving_card) {
+                            $this->session->set(CreditCard::IS_SAVING_CARD, true);
+                        }
                     }
                 }
             });

@@ -31,7 +31,7 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                            <a href="javascript:void(0)" class="change-stripe-card">別のカードを使用する</a>
+                            <a href="javascript:void(0)" class="change-stripe-card">カード情報を入力する</a>
                         </div>
                     {% endif %}
                     {{ form_widget(form.stripe_customer) }}
@@ -45,7 +45,7 @@
 
                 <!-- ここにエラーメッセージが表示される -->
                 <div id="card-errors" class="text-danger small mb-lg-5" role="alert"></div>
-                {{ form_widget(form.stripe_payment_intent_id) }}
+                {{ form_widget(form.stripe_payment_method_id) }}
             </div>
         </div>
 
@@ -56,11 +56,11 @@
                 });
             });
 
-            var stripe = Stripe('{{ stripe_public_key }}');
-            var elements = stripe.elements();
+            const stripe = Stripe('{{ stripe_public_key }}');
+            const elements = stripe.elements();
 
             // スタイルのカスタマイズ
-            var style = {
+            const style = {
                 base: {
                     color: '#32325d',
                     fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
@@ -74,6 +74,8 @@
                     iconColor: '#fa755a'
                 }
             };
+
+            const form = document.getElementById('shopping-form');
 
             // クレジットカード情報入力欄の構築
             const card = elements.create('card', {style: style, hidePostalCode: true});
@@ -108,27 +110,20 @@
                         {% if app.user %}
                         const stripePaymentMethod = $('#{{ form.cards.vars.id }} input:checked').val();
                         if (stripePaymentMethod && $('#stripe-card:visible').length == 0) {
-                            const stripeCustomer = $('#{{ form.stripe_customer.vars.id }}').val();
-                            fetchStripePaymentIntent(stripePaymentMethod, stripeCustomer, false)
-                                .then(stripeResponseToJson)
-                                .then(stripeResponseHandler)
+                            $('#{{ form.stripe_payment_method_id.vars.id }}').val(stripePaymentMethod);
+                            form.submit();
                         } else {
-                            const isSavingCard = $('#{{ form.is_saving_card.vars.id }} input[type="checkbox"]').is(":checked");
-                            createStripePaymentMethod(card, null, isSavingCard)
-                                .then(stripeResponseToJson)
-                                .then(stripeResponseHandler);
+                            await createStripePaymentMethod(card);
                         }
                         {% else %}
-                        createStripePaymentMethod(card, null, false)
-                            .then(stripeResponseToJson)
-                            .then(stripeResponseHandler);
+                            await createStripePaymentMethod(card);
                         {% endif %}
 
                     });
                 }
             }
 
-            async function createStripePaymentMethod(card, stripeCustomer, isSavingCard) {
+            async function createStripePaymentMethod(card) {
                 return await stripe
                     .createPaymentMethod({
                         type: 'card',
@@ -139,7 +134,8 @@
                         if (result.error) {
                             showStripeErrorMessage(result.error.message);
                         } else {
-                            return await fetchStripePaymentIntent(result.paymentMethod.id, stripeCustomer, isSavingCard);
+                            $('#{{ form.stripe_payment_method_id.vars.id }}').val(result.paymentMethod.id);
+                            form.submit();
                         }
                     });
             }
@@ -185,8 +181,7 @@
                         if (result.error) {
                             showStripeErrorMessage(result.error.message)
                         } else {
-                            $('#{{ form.stripe_payment_intent_id.vars.id }}').val(result.paymentIntent.id);
-                            const form = document.getElementById('shopping-form');
+                            $('#{{ form.stripe_payment_method_id.vars.id }}').val(result.paymentIntent.id);
                             form.submit();
                         }
                     });

@@ -18,7 +18,7 @@ use Eccube\Common\EccubeConfig;
 use Eccube\Entity\Master\OrderStatus;
 use Eccube\Entity\Order;
 use Eccube\Repository\Master\OrderStatusRepository;
-use Eccube\Service\Payment\PaymentMethod;
+use Eccube\Service\Payment\PaymentDispatcher;
 use Eccube\Service\Payment\PaymentMethodInterface;
 use Eccube\Service\Payment\PaymentResult;
 use Eccube\Service\PurchaseFlow\PurchaseContext;
@@ -29,16 +29,16 @@ use Plugin\Stripe4\Entity\Team;
 use Plugin\Stripe4\Repository\ConfigRepository;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Plugin\Stripe4\Repository\TeamRepository;
-use Stripe\Charge;
-use Stripe\Customer;
-use Stripe\Exception\CardException;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
-use Stripe\Token;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class CreditCard implements PaymentMethodInterface
 {
+    const IS_SAVING_CARD = 'stripe.is_saving_card';
+
     /**
      * @var Order
      */
@@ -84,6 +84,16 @@ class CreditCard implements PaymentMethodInterface
      */
     private $entityManager;
 
+    /**
+     * @var ParameterBag
+     */
+    private $parameterBag;
+
+    /**
+     * @var SessionInterface
+     */
+    private $session;
+
     public function __construct(
         OrderStatusRepository $orderStatusRepository,
         PaymentStatusRepository $paymentStatusRepository,
@@ -91,7 +101,9 @@ class CreditCard implements PaymentMethodInterface
         EccubeConfig $eccubeConfig,
         ConfigRepository $configRepository,
         TeamRepository $teamRepository,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        ParameterBag $parameterBag,
+        SessionInterface $session
     )
     {
         $this->orderStatusRepository = $orderStatusRepository;
@@ -101,6 +113,8 @@ class CreditCard implements PaymentMethodInterface
         $this->config = $configRepository->get();
         $this->teamRepository = $teamRepository;
         $this->entityManager = $entityManager;
+        $this->parameterBag = $parameterBag;
+        $this->session = $session;
 
         Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
     }
@@ -121,12 +135,7 @@ class CreditCard implements PaymentMethodInterface
         $this->Order->setStripePaymentStatus($PaymentStatus);
 
         $result = new PaymentResult();
-        if ($this->Order->getStripePaymentIntentId()) {
-            $result->setSuccess(true);
-        } else {
-            $result->setSuccess(false);
-        }
-
+        $result->setSuccess(true);
 
         return $result;
     }
@@ -142,64 +151,7 @@ class CreditCard implements PaymentMethodInterface
     {
         // TODO: Implement checkout() method.
         $result = new PaymentResult();
-
-        try {
-            $intent = PaymentIntent::retrieve($this->Order->getStripePaymentIntentId());
-
-            // 受注ステータスを新規受付へ変更
-            $OrderStatus = $this->orderStatusRepository->find(OrderStatus::NEW);
-            $this->Order->setOrderStatus($OrderStatus);
-
-            if ($this->config->getCapture()) {
-                $intent->capture();
-
-                // 決済ステータスを実売上へ変更
-                $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::ACTUAL_SALES);
-                $this->Order->setStripePaymentStatus($PaymentStatus);
-            } else {
-                // 決済ステータスを仮売上へ変更
-                $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::PROVISIONAL_SALES);
-                $this->Order->setStripePaymentStatus($PaymentStatus);
-            }
-
-            if ($intent->customer) {
-                $team = $this->teamRepository->findOneBy([
-                    "Customer" => $this->Order->getCustomer(),
-                    "stripe_customer_id" => $intent->customer,
-                    "stripe_payment_method_id" => $intent->payment_method
-                ]);
-
-                if (null === $team) {
-                    $team = new Team();
-                    $team
-                        ->setCustomer($this->Order->getCustomer())
-                        ->setStripeCustomerId($intent->customer)
-                        ->setStripePaymentMethodId($intent->payment_method);
-                    $this->entityManager->persist($team);
-                }
-            }
-
-            // purchaseFlow::commitを呼び出し、購入処理をさせる
-            $this->purchaseFlow->commit($this->Order, new PurchaseContext());
-
-            $result->setSuccess(true);
-
-        } catch (\Exception $e) {
-            // 受注ステータスを購入処理中へ変更
-            $OrderStatus = $this->orderStatusRepository->find(OrderStatus::PROCESSING);
-            $this->Order->setOrderStatus($OrderStatus);
-
-            // 決済ステータスを未決済へ変更
-            $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::OUTSTANDING);
-            $this->Order->setStripePaymentStatus($PaymentStatus);
-
-            // purchaseFlow::rollbackを呼び出し, 購入処理をロールバックする。
-            $this->purchaseFlow->rollback($this->Order, new PurchaseContext());
-
-            log_error(sprintf("%s: %s", CreditCard::class, $e->getMessage()));
-            $result->setSuccess(false);
-            $result->setErrors([trans('stripe.shopping.checkout.error')]);
-        }
+        $result->setSuccess(true);
 
         return $result;
     }
@@ -219,6 +171,13 @@ class CreditCard implements PaymentMethodInterface
         $this->Order->setOrderStatus($OrderStatus);
 
         $this->purchaseFlow->prepare($this->Order, new PurchaseContext());
+
+        // 3Dセキュア画面へリダイレクト
+        $dispatcher = new PaymentDispatcher();
+        $dispatcher->setRoute('stripe_payment');
+        $dispatcher->setForward(false);
+
+        return $dispatcher;
     }
 
     /**
