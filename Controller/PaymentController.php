@@ -141,7 +141,7 @@ class PaymentController extends AbstractShoppingController
                 $intent = PaymentIntent::retrieve($request->query->get('payment_intent'));
                 if($intent->status == "requires_confirmation") {
                     $intent->confirm([
-                        'return_url' => $this->generateUrl('stripe_payment', UrlGeneratorInterface::ABSOLUTE_URL)
+                        'return_url' => $this->generateUrl('stripe_payment', [], UrlGeneratorInterface::ABSOLUTE_URL)
                     ]);
                 }
             } elseif (null !== $paymentMethodId) {
@@ -177,7 +177,7 @@ class PaymentController extends AbstractShoppingController
                 log_info("[Stripe]PaymentIntent生成");
                 $intent = PaymentIntent::create($paymentIntentData);
                 $intent->confirm([
-                    'return_url' => $this->generateUrl('stripe_payment', UrlGeneratorInterface::ABSOLUTE_URL)
+                    'return_url' => $this->generateUrl('stripe_payment', [], UrlGeneratorInterface::ABSOLUTE_URL)
                 ]);
             } else {
                 throw new CardException('[Stripe]クレジットカード情報が正しくありません。');
