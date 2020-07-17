@@ -140,57 +140,6 @@
                     });
             }
 
-            async function fetchStripePaymentIntent(paymentMethodId, stripeCustomer, isSavingCard) {
-                return await fetch("{{ url("stripe_payment") }}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-Requested-With": "XMLHttpRequest",
-                        "ECCUBE-CSRF-TOKEN": "{{ csrf_token(constant('Eccube\\Common\\Constant::TOKEN_NAME')) }}"
-                    },
-                    body: JSON.stringify({
-                        paymentMethodId: paymentMethodId,
-                        stripeCustomer: stripeCustomer,
-                        isSavingCard: isSavingCard ? true : false,
-                    })
-                });
-            }
-
-            function stripeResponseToJson(response) {
-                // ここらへんで3Dセキュアのモーダルが表示されるので一旦オーバーレイ解除
-                const overlay = document.querySelector('.bg-load-overlay');
-                overlay.remove();
-                return response.json();
-            }
-
-            async function stripeResponseHandler(paymentData) {
-                if (paymentData.requiresAction) {
-                    await stripeConfirmCardPayment(paymentData.clientSecret);
-                } else if (paymentData.error) {
-                    showStripeErrorMessage(paymentData.error)
-                } else {
-                    redirectToHomepage(paymentData.clientSecret)
-                }
-            }
-
-            function stripeConfirmCardPayment(clientSecret) {
-                stripe
-                    .confirmCardPayment(clientSecret)
-                    .then(async (result) => {
-                        loadingOverlay();
-                        if (result.error) {
-                            showStripeErrorMessage(result.error.message)
-                        } else {
-                            $('#{{ form.stripe_payment_method_id.vars.id }}').val(result.paymentIntent.id);
-                            form.submit();
-                        }
-                    });
-            }
-
-            function redirectToHomepage(clientSecret) {
-                location.href = '{{ url('homepage') }}';
-            }
-
             function showStripeErrorMessage(message) {
                 const errorElement = document.getElementById('card-errors');
                 errorElement.textContent = message;

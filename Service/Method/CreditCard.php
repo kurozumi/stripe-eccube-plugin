@@ -13,7 +13,6 @@
 namespace Plugin\Stripe4\Service\Method;
 
 
-use Doctrine\ORM\EntityManagerInterface;
 use Eccube\Common\EccubeConfig;
 use Eccube\Entity\Master\OrderStatus;
 use Eccube\Entity\Order;
@@ -23,17 +22,10 @@ use Eccube\Service\Payment\PaymentMethodInterface;
 use Eccube\Service\Payment\PaymentResult;
 use Eccube\Service\PurchaseFlow\PurchaseContext;
 use Eccube\Service\PurchaseFlow\PurchaseFlow;
-use Plugin\Stripe4\Entity\Config;
 use Plugin\Stripe4\Entity\PaymentStatus;
-use Plugin\Stripe4\Entity\Team;
-use Plugin\Stripe4\Repository\ConfigRepository;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
-use Plugin\Stripe4\Repository\TeamRepository;
-use Stripe\PaymentIntent;
 use Stripe\Stripe;
 use Symfony\Component\Form\FormInterface;
-use Symfony\Component\HttpFoundation\ParameterBag;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class CreditCard implements PaymentMethodInterface
 {
@@ -69,52 +61,17 @@ class CreditCard implements PaymentMethodInterface
      */
     protected $eccubeConfig;
 
-    /**
-     * @var Config
-     */
-    protected $config;
-
-    /**
-     * @var TeamRepository
-     */
-    private $teamRepository;
-
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
-
-    /**
-     * @var ParameterBag
-     */
-    private $parameterBag;
-
-    /**
-     * @var SessionInterface
-     */
-    private $session;
-
     public function __construct(
         OrderStatusRepository $orderStatusRepository,
         PaymentStatusRepository $paymentStatusRepository,
         PurchaseFlow $shoppingPurchaseFlow,
-        EccubeConfig $eccubeConfig,
-        ConfigRepository $configRepository,
-        TeamRepository $teamRepository,
-        EntityManagerInterface $entityManager,
-        ParameterBag $parameterBag,
-        SessionInterface $session
+        EccubeConfig $eccubeConfig
     )
     {
         $this->orderStatusRepository = $orderStatusRepository;
         $this->paymentStatusRepository = $paymentStatusRepository;
         $this->purchaseFlow = $shoppingPurchaseFlow;
         $this->eccubeConfig = $eccubeConfig;
-        $this->config = $configRepository->get();
-        $this->teamRepository = $teamRepository;
-        $this->entityManager = $entityManager;
-        $this->parameterBag = $parameterBag;
-        $this->session = $session;
 
         Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
     }
