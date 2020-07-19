@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of ec-cube
+ * This file is part of Stripe4
  *
  * Copyright(c) Akira Kurozumi <info@a-zumi.net>
  *
