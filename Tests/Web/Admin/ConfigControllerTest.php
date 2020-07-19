@@ -13,7 +13,7 @@
 namespace Plugin\Stripe4\Tests\Web\Admin;
 
 
-use Plugin\CustomerClassPriceDeliveryAddon4\Tests\Web\Admin\AbstractAdminWebTestCase;
+use Eccube\Tests\Web\Admin\AbstractAdminWebTestCase;
 
 class ConfigControllerTest extends AbstractAdminWebTestCase
 {
