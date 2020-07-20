@@ -120,7 +120,7 @@ class PaymentController extends AbstractShoppingController
         if ($this->orderHelper->isLoginRequired()) {
             log_info('[Stripe][注文確認] 未ログインもしくはRememberMeログインのため, ログイン画面に遷移します.');
 
-            return $this->redirectToRoute('shopping_login');
+            return $this->redirectToRoute('f');
         }
 
         // 受注の存在チェック
@@ -176,9 +176,11 @@ class PaymentController extends AbstractShoppingController
 
                 log_info("[Stripe]PaymentIntent生成");
                 $intent = PaymentIntent::create($paymentIntentData);
-                $intent->confirm([
-                    'return_url' => $this->generateUrl('stripe_payment', [], UrlGeneratorInterface::ABSOLUTE_URL)
-                ]);
+                if($intent->status == "requires_action") {
+                    $intent->confirm([
+                        'return_url' => $this->generateUrl('stripe_payment', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                    ]);
+                }
             } else {
                 throw new CardException('[Stripe]クレジットカード情報が正しくありません。');
             }
