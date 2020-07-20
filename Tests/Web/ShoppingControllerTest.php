@@ -22,6 +22,7 @@ use Eccube\Repository\PaymentRepository;
 use Eccube\Repository\ProductRepository;
 use Eccube\Tests\Web\AbstractShoppingControllerTestCase;
 use Plugin\Stripe4\Service\Method\CreditCard;
+use Symfony\Component\Filesystem\Filesystem;
 
 class ShoppingControllerTest extends AbstractShoppingControllerTestCase
 {
@@ -92,11 +93,11 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
             $file
         );
 
-        file_put_contents(
+        $fs = new Filesystem();
+        $fs->dumpFile(
             $this->themeFrontDir.'/Shopping/index.twig',
             $file
         );
-
 
         /** @var Delivery $delivery 販売種別Aのサンプル業者 */
         $delivery = $this->deliveryRepository->find(1);
