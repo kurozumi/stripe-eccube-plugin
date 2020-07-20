@@ -120,7 +120,7 @@ class PaymentController extends AbstractShoppingController
         if ($this->orderHelper->isLoginRequired()) {
             log_info('[Stripe][注文確認] 未ログインもしくはRememberMeログインのため, ログイン画面に遷移します.');
 
-            return $this->redirectToRoute('f');
+            return $this->redirectToRoute('shopping_login');
         }
 
         // 受注の存在チェック
