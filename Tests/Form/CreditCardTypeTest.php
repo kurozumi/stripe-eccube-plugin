@@ -20,7 +20,7 @@ use Plugin\Stripe4\Form\Type\CreditCardType;
 use Plugin\Stripe4\Repository\CreditCardRepository;
 use Symfony\Component\Form\FormInterface;
 
-class CardTypeTest extends AbstractTypeTestCase
+class CreditCardTypeTest extends AbstractTypeTestCase
 {
     /** @var FormInterface */
     protected $form;
