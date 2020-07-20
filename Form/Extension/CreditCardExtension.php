@@ -17,6 +17,7 @@ use Doctrine\ORM\EntityRepository;
 use Eccube\Entity\Order;
 use Eccube\Form\Type\Shopping\OrderType;
 use Plugin\Stripe4\Entity\Team;
+use Plugin\Stripe4\Form\Type\CardType;
 use Plugin\Stripe4\Service\Method\CreditCard;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractTypeExtension;
@@ -78,24 +79,15 @@ class CreditCardExtension extends AbstractTypeExtension
                                 'mapped' => false,
                                 'data' => $order->getCustomer()->getTeams()->count() ? $order->getCustomer()->getTeams()->first()->getStripeCustomerId() : ''
                             ])
-                            ->add('cards', EntityType::class, [
+                            ->add('cards', CardType::class, [
                                 'mapped' => false,
                                 'required' => false,
-                                'class' => Team::class,
                                 'query_builder' => function (EntityRepository $er) use ($Customer) {
                                     return $er->createQueryBuilder("t")
                                         ->where("t.Customer = :Customer")
                                         ->setParameter("Customer", $Customer);
                                 },
-                                'choice_label' => function (Team $team) {
-                                    return $team->getStripePaymentMethodId();
-                                },
-                                'choice_value' => function (?Team $team) {
-                                    return $team ? $team->getStripePaymentMethodId() : '';
-                                },
                                 'expanded' => true,
-                                'multiple' => false,
-                                'placeholder' => false
                             ]);
                     }
                 }

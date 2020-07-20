@@ -10,7 +10,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Plugin\Stripe4\Form\Master;
+namespace Plugin\Stripe4\Form\Type\Master;
 
 
 use Eccube\Form\Type\MasterType;

@@ -14,7 +14,7 @@ namespace Plugin\Stripe4\Tests\Form\Master;
 
 
 use Eccube\Tests\Form\Type\AbstractTypeTestCase;
-use Plugin\Stripe4\Form\Master\PaymentStatusType;
+use Plugin\Stripe4\Form\Type\Master\PaymentStatusType;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Symfony\Component\Form\FormInterface;
 

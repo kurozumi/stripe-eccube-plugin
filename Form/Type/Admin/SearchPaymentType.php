@@ -15,7 +15,7 @@ namespace Plugin\Stripe4\Form\Type\Admin;
 
 use Eccube\Form\Type\Master\OrderStatusType;
 use Eccube\Form\Type\Master\PaymentType;
-use Plugin\Stripe4\Form\Master\PaymentStatusType;
+use Plugin\Stripe4\Form\Type\Master\PaymentStatusType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 
