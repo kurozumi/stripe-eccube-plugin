@@ -26,6 +26,7 @@ class CardType extends AbstractType
             'class' => Team::class,
             'expanded' => false,
             'multiple' => false,
+            'required' => false,
             'placeholder' => false,
             'choice_label' => function (Team $team) {
                 return $team->getStripePaymentMethodId();
@@ -33,7 +34,6 @@ class CardType extends AbstractType
             'choice_value' => function (?Team $team) {
                 return $team ? $team->getStripePaymentMethodId() : '';
             },
-            'query_builder' => null
         ]);
     }
 

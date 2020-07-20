@@ -81,13 +81,8 @@ class CreditCardExtension extends AbstractTypeExtension
                             ])
                             ->add('cards', CardType::class, [
                                 'mapped' => false,
-                                'required' => false,
-                                'query_builder' => function (EntityRepository $er) use ($Customer) {
-                                    return $er->createQueryBuilder("t")
-                                        ->where("t.Customer = :Customer")
-                                        ->setParameter("Customer", $Customer);
-                                },
                                 'expanded' => true,
+                                'choices' => $order->getCustomer()->getTeams()
                             ]);
                     }
                 }
