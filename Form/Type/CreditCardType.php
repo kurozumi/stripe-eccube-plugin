@@ -13,26 +13,26 @@
 namespace Plugin\Stripe4\Form\Type;
 
 
-use Plugin\Stripe4\Entity\Team;
+use Plugin\Stripe4\Entity\CreditCard;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class CardType extends AbstractType
+class CreditCardType extends AbstractType
 {
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults([
-            'class' => Team::class,
+            'class' => CreditCard::class,
             'expanded' => false,
             'multiple' => false,
             'required' => false,
             'placeholder' => false,
-            'choice_label' => function (Team $team) {
-                return $team->getStripePaymentMethodId();
+            'choice_label' => function (CreditCard $creditCard) {
+                return $creditCard->getStripePaymentMethodId();
             },
-            'choice_value' => function (?Team $team) {
-                return $team ? $team->getStripePaymentMethodId() : '';
+            'choice_value' => function (?CreditCard $creditCard) {
+                return $creditCard ? $creditCard->getStripePaymentMethodId() : '';
             },
         ]);
     }

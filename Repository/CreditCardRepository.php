@@ -14,13 +14,13 @@ namespace Plugin\Stripe4\Repository;
 
 
 use Eccube\Repository\AbstractRepository;
-use Plugin\Stripe4\Entity\Team;
+use Plugin\Stripe4\Entity\CreditCard;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
-class TeamRepository extends AbstractRepository
+class CreditCardRepository extends AbstractRepository
 {
     public function __construct(RegistryInterface $registry)
     {
-        parent::__construct($registry, Team::class);
+        parent::__construct($registry, CreditCard::class);
     }
 }

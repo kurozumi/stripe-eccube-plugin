@@ -29,55 +29,55 @@ trait CustomerTrait
     /**
      * @var Collection
      *
-     * @ORM\OneToMany(targetEntity="Plugin\Stripe4\Entity\Team", mappedBy="Customer", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="Plugin\Stripe4\Entity\CreditCard", mappedBy="Customer", cascade={"persist", "remove"})
      */
-    private $Teams;
+    private $creditCards;
 
     /**
      * @return Collection
      */
-    public function getTeams(): Collection
+    public function getCreditCards(): Collection
     {
-        if (null === $this->Teams) {
-            $this->Teams = new ArrayCollection();
+        if (null === $this->creditCards) {
+            $this->creditCards = new ArrayCollection();
         }
 
-        return $this->Teams;
+        return $this->creditCards;
     }
 
     /**
-     * @param Team $team
+     * @param CreditCard $creditCard
      * @return $this
      */
-    public function addTeam(Team $team): self
+    public function addCreditCard(CreditCard $creditCard): self
     {
-        if (null === $this->Teams) {
-            $this->Teams = new ArrayCollection();
+        if (null === $this->creditCards) {
+            $this->creditCards = new ArrayCollection();
         }
 
-        if (!$this->Teams->contains($team)) {
-            $this->Teams[] = $team;
-            $team->setCustomer($this);
+        if (!$this->creditCards->contains($creditCard)) {
+            $this->creditCards[] = $creditCard;
+            $creditCard->setCustomer($this);
         }
 
         return $this;
     }
 
     /**
-     * @param Team $team
+     * @param CreditCard $creditCard
      * @return $this
      */
-    public function removeTeam(Team $team): self
+    public function removeCreditCard(CreditCard $creditCard): self
     {
-        if (null === $this->Teams) {
-            $this->Teams = new ArrayCollection();
+        if (null === $this->creditCards) {
+            $this->creditCards = new ArrayCollection();
         }
 
-        if ($this->Teams->contains($team)) {
-            $this->Teams->removeElement($team);
+        if ($this->creditCards->contains($creditCard)) {
+            $this->creditCards->removeElement($creditCard);
 
-            if($team->getCustomer() === $this) {
-                $team->setCustomer(null);
+            if($creditCard->getCustomer() === $this) {
+                $creditCard->setCustomer(null);
             }
         }
 

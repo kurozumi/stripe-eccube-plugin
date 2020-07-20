@@ -15,15 +15,15 @@ namespace Plugin\Stripe4\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Eccube\Entity\Customer;
 
-if (!class_exists(Team::class)) {
+if (!class_exists(CreditCard::class)) {
     /**
      * Class CreditCard
      * @package Plugin\Stripe4\Entity
      *
-     * @ORM\Table(name="plg_stripe_team")
-     * @ORM\Entity(repositoryClass="Plugin\Stripe4\Repository\TeamRepository")
+     * @ORM\Table(name="plg_stripe_credit_card")
+     * @ORM\Entity(repositoryClass="Plugin\Stripe4\Repository\CreditCardRepository")
      */
-    class Team
+    class CreditCard
     {
         /**
          * @var int
@@ -37,7 +37,7 @@ if (!class_exists(Team::class)) {
         /**
          * @var Customer
          *
-         * @ORM\ManyToOne(targetEntity="Eccube\Entity\Customer", inversedBy="Teams")
+         * @ORM\ManyToOne(targetEntity="Eccube\Entity\Customer", inversedBy="creditCards")
          */
         private $Customer;
 

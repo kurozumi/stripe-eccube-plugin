@@ -15,9 +15,9 @@ namespace Plugin\Stripe4\Tests\Form;
 
 use Eccube\Entity\Customer;
 use Eccube\Tests\Form\Type\AbstractTypeTestCase;
-use Plugin\Stripe4\Entity\Team;
-use Plugin\Stripe4\Form\Type\CardType;
-use Plugin\Stripe4\Repository\TeamRepository;
+use Plugin\Stripe4\Entity\CreditCard;
+use Plugin\Stripe4\Form\Type\CreditCardType;
+use Plugin\Stripe4\Repository\CreditCardRepository;
 use Symfony\Component\Form\FormInterface;
 
 class CardTypeTest extends AbstractTypeTestCase
@@ -25,11 +25,11 @@ class CardTypeTest extends AbstractTypeTestCase
     /** @var FormInterface */
     protected $form;
 
-    /** @var TeamRepository */
-    protected $teamRepository;
+    /** @var CreditCardRepository */
+    protected $creditCardRepository;
 
-    /** @var Team  */
-    protected $team;
+    /** @var CreditCard  */
+    protected $creditCard;
 
     public function setUp()
     {
@@ -37,13 +37,13 @@ class CardTypeTest extends AbstractTypeTestCase
 
         $container = self::$kernel->getContainer();
 
-        $this->teamRepository = $container->get(TeamRepository::class);
+        $this->creditCardRepository = $container->get(CreditCardRepository::class);
 
         $Customer = $this->createCustomer();
-        $this->team = $this->createTeam($Customer);
+        $this->creditCard = $this->createCreditCard($Customer);
 
         $this->form = $this->formFactory
-            ->createBuilder(CardType::class, null, [
+            ->createBuilder(CreditCardType::class, null, [
                 'csrf_protection' => false
             ])
             ->getForm();
@@ -56,24 +56,24 @@ class CardTypeTest extends AbstractTypeTestCase
 
     public function test正常テスト()
     {
-        $this->form->submit($this->team->getStripePaymentMethodId());
+        $this->form->submit($this->creditCard->getStripePaymentMethodId());
         self::assertTrue($this->form->isValid());
-        self::assertEquals($this->form->getData(), $this->teamRepository->find($this->team->getId()));
+        self::assertEquals($this->form->getData(), $this->creditCardRepository->find($this->creditCard->getId()));
     }
 
-    protected function createTeam(Customer $customer)
+    protected function createCreditCard(Customer $customer)
     {
         $faker = $this->getFaker();
 
-        $team = new Team();
-        $team
+        $creditCard = new CreditCard();
+        $creditCard
             ->setCustomer($customer)
             ->setStripeCustomerId($faker->word)
             ->setStripePaymentMethodId($faker->word);
-        $this->entityManager->persist($team);
+        $this->entityManager->persist($creditCard);
         $this->entityManager->flush();
 
-        return $team;
+        return $creditCard;
     }
 
 }

@@ -25,11 +25,10 @@ use Eccube\Service\OrderHelper;
 use Eccube\Service\PurchaseFlow\PurchaseContext;
 use Plugin\Stripe4\Entity\Config;
 use Plugin\Stripe4\Entity\PaymentStatus;
-use Plugin\Stripe4\Entity\Team;
+use Plugin\Stripe4\Entity\CreditCard;
 use Plugin\Stripe4\Repository\ConfigRepository;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
-use Plugin\Stripe4\Repository\TeamRepository;
-use Plugin\Stripe4\Service\Method\CreditCard;
+use Plugin\Stripe4\Repository\CreditCardRepository;
 use Stripe\Customer;
 use Stripe\Exception\CardException;
 use Stripe\PaymentIntent;
@@ -57,9 +56,9 @@ class PaymentController extends AbstractShoppingController
     private $orderHelper;
 
     /**
-     * @var TeamRepository
+     * @var CreditCardRepository
      */
-    private $teamRepository;
+    private $creditCardRepository;
 
     /**
      * @var OrderStatusRepository
@@ -90,7 +89,7 @@ class PaymentController extends AbstractShoppingController
         CartService $cartService,
         OrderHelper $orderHelper,
         EccubeConfig $eccubeConfig,
-        TeamRepository $teamRepository,
+        CreditCardRepository $creditCardRepository,
         OrderStatusRepository $orderStatusRepository,
         OrderRepository $orderRepository,
         MailService $mailService,
@@ -103,7 +102,7 @@ class PaymentController extends AbstractShoppingController
 
         $this->cartService = $cartService;
         $this->orderHelper = $orderHelper;
-        $this->teamRepository = $teamRepository;
+        $this->creditCardRepository = $creditCardRepository;
         $this->orderStatusRepository = $orderStatusRepository;
         $this->orderRepository = $orderRepository;
         $this->mailService = $mailService;
@@ -133,7 +132,7 @@ class PaymentController extends AbstractShoppingController
         }
 
         $paymentMethodId = $Order->getStripePaymentMethodId();
-        $isSavingCard = $this->session->get(CreditCard::IS_SAVING_CARD);
+        $isSavingCard = $this->session->get(\Plugin\Stripe4\Service\Method\CreditCard::IS_SAVING_CARD);
 
         try {
             if (null !== $request->query->get('payment_intent')) {
@@ -158,13 +157,13 @@ class PaymentController extends AbstractShoppingController
                 /** @var \Eccube\Entity\Customer $Customer */
                 $Customer = $this->getUser();
 
-                /** @var Team $team */
-                $team = $this->teamRepository->findOneBy([
+                /** @var CreditCard $creditCard */
+                $creditCard = $this->creditCardRepository->findOneBy([
                     "stripe_payment_method_id" => $paymentMethodId
                 ]);
 
-                if ($team) {
-                    $paymentIntentData['customer'] = $team->getStripeCustomerId();
+                if ($creditCard) {
+                    $paymentIntentData['customer'] = $creditCard->getStripeCustomerId();
                 } elseif ($isSavingCard && $Customer) {
                     $stripeCustomer = Customer::create([
                         "email" => $Customer->getEmail()
@@ -238,20 +237,20 @@ class PaymentController extends AbstractShoppingController
                 }
 
                 if ($intent->customer) {
-                    $team = $this->teamRepository->findOneBy([
+                    $creditCard = $this->creditCardRepository->findOneBy([
                         "Customer" => $Order->getCustomer(),
                         "stripe_customer_id" => $intent->customer,
                         "stripe_payment_method_id" => $intent->payment_method
                     ]);
 
-                    if (null === $team) {
+                    if (null === $creditCard) {
                         log_info("[Stripe]Stripeカスタマー情報を保存");
-                        $team = new Team();
-                        $team
+                        $creditCard = new CreditCard();
+                        $creditCard
                             ->setCustomer($Order->getCustomer())
                             ->setStripeCustomerId($intent->customer)
                             ->setStripePaymentMethodId($intent->payment_method);
-                        $this->entityManager->persist($team);
+                        $this->entityManager->persist($creditCard);
                     }
                 }
 

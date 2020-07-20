@@ -13,13 +13,10 @@
 namespace Plugin\Stripe4\Form\Extension;
 
 
-use Doctrine\ORM\EntityRepository;
 use Eccube\Entity\Order;
 use Eccube\Form\Type\Shopping\OrderType;
-use Plugin\Stripe4\Entity\Team;
-use Plugin\Stripe4\Form\Type\CardType;
+use Plugin\Stripe4\Form\Type\CreditCardType;
 use Plugin\Stripe4\Service\Method\CreditCard;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
@@ -77,12 +74,12 @@ class CreditCardExtension extends AbstractTypeExtension
                         $form
                             ->add('stripe_customer', HiddenType::class, [
                                 'mapped' => false,
-                                'data' => $order->getCustomer()->getTeams()->count() ? $order->getCustomer()->getTeams()->first()->getStripeCustomerId() : ''
+                                'data' => $order->getCustomer()->getCreditCards()->count() ? $order->getCustomer()->getCreditCards()->first()->getStripeCustomerId() : ''
                             ])
-                            ->add('cards', CardType::class, [
+                            ->add('cards', CreditCardType::class, [
                                 'mapped' => false,
                                 'expanded' => true,
-                                'choices' => $order->getCustomer()->getTeams()
+                                'choices' => $order->getCustomer()->getCreditCards()
                             ]);
                     }
                 }
