@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of Plugin
+ * This file is part of Stripe4
  *
  * Copyright(c) Akira Kurozumi <info@a-zumi.net>
  *
@@ -69,7 +69,10 @@ class CreditCardTypeTest extends AbstractTypeTestCase
         $creditCard
             ->setCustomer($customer)
             ->setStripeCustomerId($faker->word)
-            ->setStripePaymentMethodId($faker->word);
+            ->setStripePaymentMethodId($faker->word)
+            ->setFingerprint($faker->word)
+            ->setBrand($faker->word)
+            ->setLast4($faker->word);
         $this->entityManager->persist($creditCard);
         $this->entityManager->flush();
 

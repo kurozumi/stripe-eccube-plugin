@@ -15,6 +15,7 @@ namespace Plugin\Stripe4\Form\Extension;
 
 use Eccube\Entity\Order;
 use Eccube\Form\Type\Shopping\OrderType;
+use Eccube\Form\Type\ToggleSwitchType;
 use Plugin\Stripe4\Form\Type\CreditCardType;
 use Plugin\Stripe4\Service\Method\CreditCard;
 use Symfony\Component\Form\AbstractTypeExtension;
@@ -23,6 +24,7 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
@@ -61,44 +63,18 @@ class CreditCardExtension extends AbstractTypeExtension
                                 new NotBlank()
                             ]
                         ])
-                        ->add('is_saving_card', ChoiceType::class, [
-                            'mapped' => false,
-                            'choices' => [
-                                'カード情報を保存する' => true,
-                            ],
-                            'expanded' => true,
-                            'multiple' => true
+                        ->add('stripe_saving_card', ToggleSwitchType::class, [
+                            'mapped' => true,
+                            'label' => 'カード情報を保存する'
                         ]);
 
                     if ($Customer = $order->getCustomer()) {
                         $form
-                            ->add('stripe_customer', HiddenType::class, [
-                                'mapped' => false,
-                                'data' => $order->getCustomer()->getCreditCards()->count() ? $order->getCustomer()->getCreditCards()->first()->getStripeCustomerId() : ''
-                            ])
                             ->add('cards', CreditCardType::class, [
                                 'mapped' => false,
                                 'expanded' => true,
                                 'choices' => $order->getCustomer()->getCreditCards()
                             ]);
-                    }
-                }
-            });
-
-        $builder
-            ->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
-                /** @var FormBuilderInterface $form */
-                $form = $event->getForm();
-                /** @var Order $order */
-                $order = $event->getData();
-
-                if ($Customer = $order->getCustomer()) {
-                    $this->session->remove(CreditCard::IS_SAVING_CARD);
-                    if ($form->has('is_saving_card')) {
-                        $is_saving_card = $form->get('is_saving_card')->getData();
-                        if ($is_saving_card) {
-                            $this->session->set(CreditCard::IS_SAVING_CARD, true);
-                        }
                     }
                 }
             });

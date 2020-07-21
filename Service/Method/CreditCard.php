@@ -26,9 +26,12 @@ use Plugin\Stripe4\Entity\PaymentStatus;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Stripe\Stripe;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class CreditCard implements PaymentMethodInterface
 {
+    const STRIPE_CUSTOMER = 'stripe.customer';
     const IS_SAVING_CARD = 'stripe.is_saving_card';
 
     /**
@@ -61,19 +64,33 @@ class CreditCard implements PaymentMethodInterface
      */
     protected $eccubeConfig;
 
+    /**
+     * @var ParameterBag
+     */
+    private $parameterBag;
+
+    /**
+     * @var SessionInterface
+     */
+    private $session;
+
     public function __construct(
         OrderStatusRepository $orderStatusRepository,
         PaymentStatusRepository $paymentStatusRepository,
         PurchaseFlow $shoppingPurchaseFlow,
-        EccubeConfig $eccubeConfig
+        EccubeConfig $eccubeConfig,
+        ParameterBag $parameterBag,
+        SessionInterface $session
     )
     {
+        $this->eccubeConfig = $eccubeConfig;
+        Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
+
         $this->orderStatusRepository = $orderStatusRepository;
         $this->paymentStatusRepository = $paymentStatusRepository;
         $this->purchaseFlow = $shoppingPurchaseFlow;
-        $this->eccubeConfig = $eccubeConfig;
-
-        Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
+        $this->parameterBag = $parameterBag;
+        $this->session = $session;
     }
 
     /**
@@ -129,10 +146,12 @@ class CreditCard implements PaymentMethodInterface
 
         $this->purchaseFlow->prepare($this->Order, new PurchaseContext());
 
+        $this->parameterBag->set('stripe.Order', $this->Order);
+
         // 3Dセキュア画面へリダイレクト
         $dispatcher = new PaymentDispatcher();
         $dispatcher->setRoute('stripe_payment');
-        $dispatcher->setForward(false);
+        $dispatcher->setForward(true);
 
         return $dispatcher;
     }

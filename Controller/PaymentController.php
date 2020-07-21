@@ -32,7 +32,9 @@ use Plugin\Stripe4\Repository\CreditCardRepository;
 use Stripe\Customer;
 use Stripe\Exception\CardException;
 use Stripe\PaymentIntent;
+use Stripe\PaymentMethod;
 use Stripe\Stripe;
+use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -85,6 +87,11 @@ class PaymentController extends AbstractShoppingController
      */
     private $config;
 
+    /**
+     * @var ParameterBag
+     */
+    private $parameterBag;
+
     public function __construct(
         CartService $cartService,
         OrderHelper $orderHelper,
@@ -94,7 +101,8 @@ class PaymentController extends AbstractShoppingController
         OrderRepository $orderRepository,
         MailService $mailService,
         PaymentStatusRepository $paymentStatusRepository,
-        ConfigRepository $configRepository
+        ConfigRepository $configRepository,
+        ParameterBag $parameterBag
     )
     {
         $this->eccubeConfig = $eccubeConfig;
@@ -108,6 +116,7 @@ class PaymentController extends AbstractShoppingController
         $this->mailService = $mailService;
         $this->paymentStatusRepository = $paymentStatusRepository;
         $this->config = $configRepository->get();
+        $this->parameterBag = $parameterBag;
     }
 
     /**
@@ -115,36 +124,22 @@ class PaymentController extends AbstractShoppingController
      */
     public function payment(Request $request)
     {
-        // ログイン状態のチェック
-        if ($this->orderHelper->isLoginRequired()) {
-            log_info('[Stripe][注文確認] 未ログインもしくはRememberMeログインのため, ログイン画面に遷移します.');
+        // 受注情報の取得
+        /** @var Order $Order 受注情報の取得 */
+        $Order = $this->parameterBag->get('stripe.Order');
 
-            return $this->redirectToRoute('shopping_login');
-        }
-
-        // 受注の存在チェック
-        $preOrderId = $this->cartService->getPreOrderId();
-        $Order = $this->getPurchasePendingOrder($preOrderId);
         if (!$Order) {
-            log_info('[Stripe][注文処理] 購入処理中の受注が存在しません.', [$preOrderId]);
+            log_info('[Stripe][注文処理] 受注情報が存在しません.');
 
             return $this->redirectToRoute('shopping_error');
         }
 
         $paymentMethodId = $Order->getStripePaymentMethodId();
-        $isSavingCard = $this->session->get(\Plugin\Stripe4\Service\Method\CreditCard::IS_SAVING_CARD);
 
         try {
-            if (null !== $request->query->get('payment_intent')) {
-                log_info("[Stripe]3Dセキュア通過済み");
-                $intent = PaymentIntent::retrieve($request->query->get('payment_intent'));
-                if($intent->status == "requires_confirmation") {
-                    $intent->confirm([
-                        'return_url' => $this->generateUrl('stripe_payment', [], UrlGeneratorInterface::ABSOLUTE_URL)
-                    ]);
-                }
-            } elseif (null !== $paymentMethodId) {
+            if (null !== $paymentMethodId) {
                 log_info("[Stripe]決済処理開始");
+
                 $paymentIntentData = [
                     "amount" => (int)$Order->getPaymentTotal(),
                     "currency" => $this->eccubeConfig["currency"],
@@ -154,30 +149,25 @@ class PaymentController extends AbstractShoppingController
                     "capture_method" => $this->config->getCapture() ? "automatic" : "manual",
                 ];
 
-                /** @var \Eccube\Entity\Customer $Customer */
-                $Customer = $this->getUser();
-
-                /** @var CreditCard $creditCard */
-                $creditCard = $this->creditCardRepository->findOneBy([
-                    "stripe_payment_method_id" => $paymentMethodId
-                ]);
-
-                if ($creditCard) {
-                    $paymentIntentData['customer'] = $creditCard->getStripeCustomerId();
-                } elseif ($isSavingCard && $Customer) {
-                    $stripeCustomer = Customer::create([
-                        "email" => $Customer->getEmail()
-                    ]);
-                    $paymentIntentData['customer'] = $stripeCustomer->id;
-                    $paymentIntentData['payment_method'] = $paymentMethodId;
-                    $paymentIntentData['setup_future_usage'] = 'off_session';
+                if ($Order->getCustomer()->getCreditCards()->count() > 0) {
+                    $stripeCustomer = $Order->getCustomer()->getCreditCards()->first()->getStripeCustomerId();
+                    $paymentIntentData['customer'] = $stripeCustomer;
+                } else {
+                    if ($Order->getStripeSavingCard()) {
+                        $stripeCustomer = Customer::create([
+                            "email" => $Order->getCustomer()->getEmail()
+                        ]);
+                        $paymentIntentData['customer'] = $stripeCustomer->id;
+                        $paymentIntentData['setup_future_usage'] = 'off_session';
+                    }
                 }
 
                 log_info("[Stripe]PaymentIntent生成");
                 $intent = PaymentIntent::create($paymentIntentData);
-                if($intent->status == "requires_action") {
+
+                if ($intent->status == "requires_action") {
                     $intent->confirm([
-                        'return_url' => $this->generateUrl('stripe_payment', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                        'return_url' => $this->generateUrl('stripe_reciever', [], UrlGeneratorInterface::ABSOLUTE_URL)
                     ]);
                 }
             } else {
@@ -195,12 +185,48 @@ class PaymentController extends AbstractShoppingController
         return $this->generateResponse($intent, $Order);
     }
 
+    /**
+     * @param Request $request
+     *
+     * @Route("/stripe_reciever", name="stripe_reciever")
+     */
+    public function reciever(Request $request)
+    {
+        try {
+            if (null !== $request->query->get('payment_intent')) {
+                $intent = PaymentIntent::retrieve($request->query->get('payment_intent'));
+                if ($intent->status == "requires_confirmation") {
+                    $intent->confirm([
+                        'return_url' => $this->generateUrl('stripe_reciever', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                    ]);
+                }
+
+                $Order = $this->orderRepository->findOneBy([
+                    'stripe_payment_method_id' => $intent->payment_method,
+                    'OrderStatus' => OrderStatus::PENDING
+                ]);
+
+                if (null === $Order) {
+                    throw new \Exception("[Stripe]受注情報が存在しません。");
+                }
+            } else {
+                throw new CardException('[Stripe]決済エラー。');
+            }
+        } catch (\Exception $e) {
+            log_error("[Stripe]" . $e->getMessage());
+
+            $this->addError($e->getMessage());
+            return $this->redirectToRoute('shopping_error');
+        }
+
+        return $this->generateResponse($intent, $Order);
+    }
+
     public function generateResponse(PaymentIntent $intent, Order $Order)
     {
         switch ($intent->status) {
             case "requires_action":
             case "requires_source_action":
-                // Card requires authentication
                 log_info("[Stripe]3Dセキュア認証ページへリダイレクト");
                 return $this->redirect($intent->next_action->redirect_to_url->url);
             case "requires_payment_method":
@@ -219,12 +245,12 @@ class PaymentController extends AbstractShoppingController
                 return $this->redirectToRoute("shopping_error");
             case "succeeded":
             case "requires_capture":
-                // Payment is complete, authentication not required
-                // To cancel the payment after capture you will need to issue a Refund (https://stripe.com/docs/api/refunds)
-
                 // 受注ステータスを新規受付へ変更
                 $OrderStatus = $this->orderStatusRepository->find(OrderStatus::NEW);
                 $Order->setOrderStatus($OrderStatus);
+
+                // PaymentIntent保存
+                $Order->setStripePaymentIntentId($intent->id);
 
                 if ($this->config->getCapture()) {
                     // 決済ステータスを実売上へ変更
@@ -236,20 +262,25 @@ class PaymentController extends AbstractShoppingController
                     $Order->setStripePaymentStatus($PaymentStatus);
                 }
 
+                // クレジットカード情報を保存する場合
                 if ($intent->customer) {
+                    $paymentMethod = PaymentMethod::retrieve($intent->payment_method);
+
                     $creditCard = $this->creditCardRepository->findOneBy([
-                        "Customer" => $Order->getCustomer(),
-                        "stripe_customer_id" => $intent->customer,
-                        "stripe_payment_method_id" => $intent->payment_method
+                        "fingerprint" => $paymentMethod->card->fingerprint
                     ]);
 
+                    // DBに未登録の場合保存
                     if (null === $creditCard) {
-                        log_info("[Stripe]Stripeカスタマー情報を保存");
+                        log_info("[Stripe]クレジットカード情報を保存");
                         $creditCard = new CreditCard();
                         $creditCard
                             ->setCustomer($Order->getCustomer())
                             ->setStripeCustomerId($intent->customer)
-                            ->setStripePaymentMethodId($intent->payment_method);
+                            ->setStripePaymentMethodId($intent->payment_method)
+                            ->setFingerprint($paymentMethod->card->fingerprint)
+                            ->setBrand($paymentMethod->card->brand)
+                            ->setLast4($paymentMethod->card->last4);
                         $this->entityManager->persist($creditCard);
                     }
                 }
@@ -274,21 +305,6 @@ class PaymentController extends AbstractShoppingController
         }
     }
 
-    /**
-     * @param null $preOrderId
-     * @return object|null
-     */
-    private function getPurchasePendingOrder($preOrderId = null)
-    {
-        if (null === $preOrderId) {
-            return null;
-        }
-
-        return $this->orderRepository->findOneBy([
-            'pre_order_id' => $preOrderId,
-            'OrderStatus' => OrderStatus::PENDING,
-        ]);
-    }
 
     /**
      * @param Order $Order

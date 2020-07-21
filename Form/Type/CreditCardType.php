@@ -29,7 +29,7 @@ class CreditCardType extends AbstractType
             'required' => false,
             'placeholder' => false,
             'choice_label' => function (CreditCard $creditCard) {
-                return $creditCard->getStripePaymentMethodId();
+                return $creditCard->getBrand() . ' •••• ' . $creditCard->getLast4();
             },
             'choice_value' => function (?CreditCard $creditCard) {
                 return $creditCard ? $creditCard->getStripePaymentMethodId() : '';

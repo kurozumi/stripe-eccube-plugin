@@ -51,9 +51,30 @@ if (!class_exists(CreditCard::class)) {
         /**
          * @var string
          *
-         * @ORM\Column(type="string", nullable=true)
+         * @ORM\Column(type="string")
          */
         private $stripe_payment_method_id;
+
+        /**
+         * @var string
+         *
+         * @ORM\Column(type="string")
+         */
+        private $fingerprint;
+
+        /**
+         * @var string
+         *
+         * @ORM\Column(type="string")
+         */
+        private $brand;
+
+        /**
+         * @var string
+         *
+         * @ORM\Column(type="string")
+         */
+        private $last4;
 
         /**
          * @return int
@@ -102,20 +123,77 @@ if (!class_exists(CreditCard::class)) {
         }
 
         /**
-         * @return string|null
+         * @return string
          */
-        public function getStripePaymentMethodId(): ?string
+        public function getStripePaymentMethodId(): string
         {
             return $this->stripe_payment_method_id;
         }
 
         /**
-         * @param string|null $stripe_payment_method_id
+         * @param string $stripe_payment_method_id
          * @return $this
          */
-        public function setStripePaymentMethodId(?string $stripe_payment_method_id): self
+        public function setStripePaymentMethodId(string $stripe_payment_method_id): self
         {
             $this->stripe_payment_method_id = $stripe_payment_method_id;
+
+            return $this;
+        }
+
+        /**
+         * @return string
+         */
+        public function getFingerprint(): string
+        {
+            return $this->fingerprint;
+        }
+
+        /**
+         * @param string $fingerprint
+         * @return $this
+         */
+        public function setFingerprint(string $fingerprint): self
+        {
+            $this->fingerprint = $fingerprint;
+
+            return $this;
+        }
+
+        /**
+         * @return string
+         */
+        public function getBrand(): string
+        {
+            return $this->brand;
+        }
+
+        /**
+         * @param string $brand
+         * @return $this
+         */
+        public function setBrand(string $brand): self
+        {
+            $this->brand = $brand;
+
+            return $this;
+        }
+
+        /**
+         * @return string
+         */
+        public function getLast4(): string
+        {
+            return $this->last4;
+        }
+
+        /**
+         * @param string $last4
+         * @return $this
+         */
+        public function setLast4(string $last4): self
+        {
+            $this->last4 = $last4;
 
             return $this;
         }

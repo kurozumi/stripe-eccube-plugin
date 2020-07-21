@@ -30,6 +30,18 @@ trait OrderTrait
     private $stripe_payment_method_id;
 
     /**
+     * @var string
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $stripe_payment_intent_id;
+
+    /**
+     * @var bool
+     * @ORM\Column(type="boolean", options={"default":false})
+     */
+    private $stripe_saving_card = false;
+
+    /**
      * @var PaymentStatus
      * @ORM\ManyToOne(targetEntity="Plugin\Stripe4\Entity\PaymentStatus")
      * @ORM\JoinColumn(name="stripe_payment_status_id", referencedColumnName="id")
@@ -51,6 +63,44 @@ trait OrderTrait
     public function setStripePaymentMethodId(?string $stripe_payment_method_id): self
     {
         $this->stripe_payment_method_id = $stripe_payment_method_id;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getStripePaymentIntentId(): ?string
+    {
+        return $this->stripe_payment_intent_id;
+    }
+
+    /**
+     * @param string|null $stripe_payment_intent_id
+     * @return $this
+     */
+    public function setStripePaymentIntentId(?string $stripe_payment_intent_id): self
+    {
+        $this->stripe_payment_intent_id = $stripe_payment_intent_id;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getStripeSavingCard(): bool
+    {
+        return $this->stripe_saving_card;
+    }
+
+    /**
+     * @param bool $stripe_saving_card
+     * @return $this
+     */
+    public function setStripeSavingCard(bool $stripe_saving_card): self
+    {
+        $this->stripe_saving_card = $stripe_saving_card;
 
         return $this;
     }

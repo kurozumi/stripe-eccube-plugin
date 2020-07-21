@@ -13,8 +13,8 @@
                         <div id="card" class="form-control">
                             <!-- ここにクレジットカード番号入力欄が挿入される -->
                         </div>
-                        <div class="ec-radio">
-                            {{ form_widget(form.is_saving_card) }}
+                        <div class="ec-checkbox">
+                            {{ form_widget(form.stripe_saving_card) }}
                         </div>
 
                         {% if form.cards is defined and form.cards %}
@@ -34,7 +34,6 @@
                             <a href="javascript:void(0)" class="change-stripe-card">カード情報を入力する</a>
                         </div>
                     {% endif %}
-                    {{ form_widget(form.stripe_customer) }}
                 {% else %}
                     <div id="stripe-card" class="form-group">
                         <div id="card" class="form-control">
