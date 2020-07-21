@@ -19,7 +19,6 @@ use Eccube\Form\Type\ToggleSwitchType;
 use Plugin\Stripe4\Form\Type\CreditCardType;
 use Plugin\Stripe4\Service\Method\CreditCard;
 use Symfony\Component\Form\AbstractTypeExtension;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -50,7 +49,7 @@ class CreditCardExtension extends AbstractTypeExtension
 
         $builder
             ->addEventListener(FormEvents::POST_SET_DATA, function (FormEvent $event) {
-                /** @var FormBuilderInterface $form */
+                /** @var FormInterface $form */
                 $form = $event->getForm();
                 /** @var Order $order */
                 $order = $event->getData();
@@ -62,14 +61,14 @@ class CreditCardExtension extends AbstractTypeExtension
                             'constraints' => [
                                 new NotBlank()
                             ]
-                        ])
-                        ->add('stripe_saving_card', ToggleSwitchType::class, [
-                            'mapped' => true,
-                            'label' => 'カード情報を保存する'
                         ]);
 
                     if ($Customer = $order->getCustomer()) {
                         $form
+                            ->add('stripe_saving_card', ToggleSwitchType::class, [
+                                'mapped' => true,
+                                'label' => 'カード情報を保存する'
+                            ])
                             ->add('cards', CreditCardType::class, [
                                 'mapped' => false,
                                 'expanded' => true,
