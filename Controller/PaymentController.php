@@ -158,7 +158,6 @@ class PaymentController extends AbstractShoppingController
                             "email" => $Order->getCustomer()->getEmail()
                         ]);
                         $paymentIntentData['customer'] = $stripeCustomer->id;
-                        $paymentIntentData['setup_future_usage'] = 'off_session';
                     }
                 }
 
