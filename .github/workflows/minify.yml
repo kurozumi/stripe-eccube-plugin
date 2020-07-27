@@ -1,0 +1,50 @@
+name: Minify PHP
+on:
+  release:
+    types: [ published ]
+jobs:
+  deploy:
+    name: Build
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup PHP, with composer and extensions
+        uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
+        with:
+          php-version: 7.3
+          extensions: mbstring, xml, ctype, iconv, mysql, intl
+
+      - name: Install php-minify
+        working-directory: ../
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/kurozumi/php-minify.git
+          chmod a+x php-minify/php-minify.php
+
+      - name: Minify PHP
+        working-directory: ../
+        run: |
+          rm -rf $GITHUB_WORKSPACE/.github
+          find $GITHUB_WORKSPACE -name "dummy" -delete
+          find $GITHUB_WORKSPACE -name ".git*" -and ! -name ".gitkeep" -print0 | xargs -0 rm -rf
+          FILES=`find $GITHUB_WORKSPACE -type f -name "*.php"`
+          for FILE in ${FILES}
+          do
+            php php-minify/php-minify.php ${FILE} > stdout
+            mv stdout ${FILE}
+          done
+          chmod -R o+w $GITHUB_WORKSPACE
+          cd $GITHUB_WORKSPACE
+          tar cvzf ../${{ github.event.repository.name }}-${{ github.event.release.tag_name }}-minified.tar.gz ./*
+
+      - name: Upload binaries to release of TGZ
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ runner.workspace }}/${{ github.event.repository.name }}-${{ github.event.release.tag_name }}-minified.tar.gz
+          asset_name: ${{ github.event.repository.name }}-${{ github.event.release.tag_name }}-minified.tar.gz
+          tag: ${{ github.ref }}
+          overwrite: true
