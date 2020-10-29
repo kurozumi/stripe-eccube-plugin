@@ -43,7 +43,7 @@ jobs:
       - name: Composer Install
         run : |
           cd ec-cube
-          composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+          composer install --no-progress --prefer-dist --optimize-autoloader
 
       - name: Setup EC-CUBE
         run: |
@@ -79,8 +79,8 @@ jobs:
         env:
           DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
           DATABASE_SERVER_VERSION: ${{ matrix.mysql-versions }}
-          STRIPE_PUBLIC_KEY: pk_test_0qJvdNsbljRCueJvLHcQZpBp000QbmBBNa
-          STRIPE_SECRET_KEY: sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx
+          STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: Update Plugin
         run: |
@@ -140,7 +140,7 @@ jobs:
       - name: Composer Install
         run : |
           cd ec-cube
-          composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+          composer install --no-progress --prefer-dist --optimize-autoloader
 
       - name: Setup EC-CUBE
         run: |
@@ -176,8 +176,8 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
           DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
-          STRIPE_PUBLIC_KEY: pk_test_0qJvdNsbljRCueJvLHcQZpBp000QbmBBNa
-          STRIPE_SECRET_KEY: sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx
+          STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: Update Plugin
         run: |
