@@ -9,7 +9,7 @@ jobs:
       matrix:
         php-versions: [7.1,7.2,7.3]
         mysql-versions: [5.5, 5.6, 5.7]
-        eccube-versions: ['4.0', 'experimental/symfony4.4']
+        eccube-versions: ['experimental/symfony4.4']
     services:
       mysql:
         image: mysql:${{ matrix.mysql-versions }}
@@ -40,7 +40,7 @@ jobs:
           tar cvzf $HOME/${{ github.event.repository.name }}.tar.gz ./*
           git clone  https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b ${{ matrix.eccube-versions }} --depth=1
 
-      - name: Install Composer
+      - name: Composer Install
         run : |
           cd ec-cube
           composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
@@ -106,7 +106,7 @@ jobs:
       matrix:
         php-versions: [7.1,7.2,7.3]
         postgres-versions: [9.4, 10]
-        eccube-versions: [4.0.3]
+        eccube-versions: ['experimental/symfony4.4']
     services:
       postgres:
         image: postgres:${{ matrix.postgres-versions }}
@@ -137,7 +137,7 @@ jobs:
           tar cvzf $HOME/${{ github.event.repository.name }}.tar.gz ./*
           git clone https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b ${{ matrix.eccube-versions }} --depth=1
 
-      - name: Install Composer
+      - name: Composer Install
         run : |
           cd ec-cube
           composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
