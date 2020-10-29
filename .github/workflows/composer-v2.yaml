@@ -1,5 +1,5 @@
-name: CI/CD for EC-CUBE4 PLUGIN
-on: push
+name: CI/CD for EC-CUBE4 Plugin with Composer:v2
+on: [workflow_dispatch, pull_request]
 jobs:
   mysql:
     name: MySQL
@@ -9,7 +9,7 @@ jobs:
       matrix:
         php-versions: [7.1,7.2,7.3]
         mysql-versions: [5.5, 5.6, 5.7]
-        eccube-versions: ['4.0']
+        eccube-versions: ['4.0', 'experimental/symfony4.4']
     services:
       mysql:
         image: mysql:${{ matrix.mysql-versions }}
@@ -31,6 +31,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xml, ctype, iconv, mysql, intl
+          tools: composer:v2
 
       - name: Install EC-CUBE
         env:
@@ -53,11 +54,19 @@ jobs:
           DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
           DATABASE_SERVER_VERSION: ${{ matrix.mysql-versions }}
 
-      - name: Install Plugin
+      - name: Install Packages
         run: |
           cd ec-cube
           composer require stripe/stripe-php
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.mysql-versions }}
+
+      - name: Install Plugin
+        run: |
+          cd ec-cube
           bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
+          bin/console cache:clear --no-warmup
           bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
         env:
           DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
@@ -73,6 +82,21 @@ jobs:
           STRIPE_PUBLIC_KEY: pk_test_0qJvdNsbljRCueJvLHcQZpBp000QbmBBNa
           STRIPE_SECRET_KEY: sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx
 
+      - name: Update Plugin
+        run: |
+          cd ec-cube
+          bin/console eccube:plugin:update ${{ github.event.repository.name }}
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.mysql-versions }}
+
+      - name: Uninstall Plugin
+        run: |
+          cd ec-cube
+          bin/console eccube:plugin:uninstall --code=${{ github.event.repository.name }}
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.mysql-versions }}
 
   postgres:
     name: PostgreSQL
@@ -104,6 +128,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xml, ctype, iconv, mysql, intl
+          tools: composer:v2
 
       - name: Install EC-CUBE
         env:
@@ -126,11 +151,18 @@ jobs:
           DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
           DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
 
-      - name: Install Plugin
+      - name: Install Packages
         run: |
           cd ec-cube
           composer require stripe/stripe-php
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
+
+      - name: Install Plugin
+        run: |
           bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
+          bin/console cache:clear --no-warmup
           bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
         env:
           DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
@@ -145,3 +177,19 @@ jobs:
           DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
           STRIPE_PUBLIC_KEY: pk_test_0qJvdNsbljRCueJvLHcQZpBp000QbmBBNa
           STRIPE_SECRET_KEY: sk_test_mnjd8T7FseGNnwvI09LYlOKn00GYM6xiwx
+
+      - name: Update Plugin
+        run: |
+          cd ec-cube
+          bin/console eccube:plugin:update ${{ github.event.repository.name }}
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
+
+      - name: Uninstall Plugin
+        run: |
+          cd ec-cube
+          bin/console eccube:plugin:uninstall --code=${{ github.event.repository.name }}
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/eccube_db
+          DATABASE_SERVER_VERSION: ${{ matrix.postgres-versions }}
