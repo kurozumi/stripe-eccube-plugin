@@ -14,6 +14,7 @@ namespace Plugin\Stripe4\Tests\Form\Master;
 
 
 use Eccube\Tests\Form\Type\AbstractTypeTestCase;
+use Plugin\Stripe4\Entity\PaymentStatus;
 use Plugin\Stripe4\Form\Type\Master\PaymentStatusType;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Symfony\Component\Form\FormInterface;
@@ -32,7 +33,7 @@ class PaymentStatusTypeTest extends AbstractTypeTestCase
 
         $container = self::$kernel->getContainer();
 
-        $this->paymentStatusRepository = $container->get(PaymentStatusRepository::class);
+        $this->paymentStatusRepository = $this->entityManager->getRepository(PaymentStatus::class);
 
         $this->form = $this->formFactory
             ->createBuilder(PaymentStatusType::class, null, [

@@ -37,7 +37,7 @@ class CreditCardTypeTest extends AbstractTypeTestCase
 
         $container = self::$kernel->getContainer();
 
-        $this->creditCardRepository = $container->get(CreditCardRepository::class);
+        $this->creditCardRepository = $this->entityManager->getRepository(CreditCard::class);
 
         $Customer = $this->createCustomer();
         $this->creditCard = $this->createCreditCard($Customer);

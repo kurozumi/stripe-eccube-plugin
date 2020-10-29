@@ -17,6 +17,7 @@ use Eccube\Common\Constant;
 use Eccube\Entity\Delivery;
 use Eccube\Entity\Payment;
 use Eccube\Entity\PaymentOption;
+use Eccube\Entity\Product;
 use Eccube\Repository\DeliveryRepository;
 use Eccube\Repository\PaymentRepository;
 use Eccube\Repository\ProductRepository;
@@ -52,9 +53,9 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
 
         $container = self::$kernel->getContainer();
 
-        $this->deliveryRepository = $container->get(DeliveryRepository::class);
-        $this->paymentRepository = $container->get(PaymentRepository::class);
-        $this->productRepository = $container->get(ProductRepository::class);
+        $this->deliveryRepository = $this->entityManager->getRepository(Delivery::class);
+        $this->paymentRepository = $this->entityManager->getRepository(Payment::class);
+        $this->productRepository = $this->entityManager->getRepository(Product::class);
 
         $this->themeFrontDefaultDir = $this->eccubeConfig->get('eccube_theme_front_default_dir');
         $this->themeFrontDir = $this->eccubeConfig->get('eccube_theme_front_dir');
