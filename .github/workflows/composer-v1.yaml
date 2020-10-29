@@ -106,7 +106,7 @@ jobs:
       matrix:
         php-versions: [7.1,7.2,7.3]
         postgres-versions: [9.4, 10]
-        eccube-versions: [4.0.3]
+        eccube-versions: ['4.0', 'experimental/symfony4.4']
     services:
       postgres:
         image: postgres:${{ matrix.postgres-versions }}
@@ -161,6 +161,7 @@ jobs:
 
       - name: Install Plugin
         run: |
+          cd ec-cube
           bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
           bin/console cache:clear --no-warmup
           bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}

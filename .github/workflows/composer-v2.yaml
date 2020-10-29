@@ -161,6 +161,7 @@ jobs:
 
       - name: Install Plugin
         run: |
+          cd ec-cube
           bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
           bin/console cache:clear --no-warmup
           bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
