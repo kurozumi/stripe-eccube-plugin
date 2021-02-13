@@ -149,15 +149,17 @@ class PaymentController extends AbstractShoppingController
                     "capture_method" => $this->config->getCapture() ? "automatic" : "manual",
                 ];
 
-                if ($Order->getCustomer()->getCreditCards()->count() > 0) {
-                    $stripeCustomer = $Order->getCustomer()->getCreditCards()->first()->getStripeCustomerId();
-                    $paymentIntentData['customer'] = $stripeCustomer;
-                } else {
-                    if ($Order->getStripeSavingCard()) {
-                        $stripeCustomer = Customer::create([
-                            "email" => $Order->getCustomer()->getEmail()
-                        ]);
-                        $paymentIntentData['customer'] = $stripeCustomer->id;
+                if($Order->getCustomer())  {
+                    if ($Order->getCustomer()->getCreditCards()->count() > 0) {
+                        $stripeCustomer = $Order->getCustomer()->getCreditCards()->first()->getStripeCustomerId();
+                        $paymentIntentData['customer'] = $stripeCustomer;
+                    } else {
+                        if ($Order->getStripeSavingCard()) {
+                            $stripeCustomer = Customer::create([
+                                "email" => $Order->getCustomer()->getEmail()
+                            ]);
+                            $paymentIntentData['customer'] = $stripeCustomer->id;
+                        }
                     }
                 }
 

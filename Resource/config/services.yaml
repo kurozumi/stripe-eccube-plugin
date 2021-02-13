@@ -1,4 +1,7 @@
 parameters:
+  env(STRIPE_SECRET_KEY): ''
+  env(STRIPE_PUBLIC_KEY): ''
+
   stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
 
 twig:
