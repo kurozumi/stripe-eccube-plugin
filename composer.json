@@ -1,6 +1,6 @@
 {
   "name": "ec-cube/Stripe4",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Stripe for EC-CUBE4",
   "type": "eccube-plugin",
   "require": {
