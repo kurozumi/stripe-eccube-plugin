@@ -1,0 +1,80 @@
+name: PHPStan
+on: [workflow_dispatch, pull_request]
+env:
+  DATABASE_URL: mysql://root:root@127.0.0.1:3306/eccube_db
+  DATABASE_SERVER_VERSION: 5
+
+jobs:
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: false
+          MYSQL_ROOT_USER: root
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: eccube_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Setup PHP, with composer and extensions
+        uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
+        with:
+          php-version: 7.4
+          extensions: mbstring, xml, ctype, iconv, mysql, intl
+          tools: composer:v1
+
+      - name: Clone EC-CUBE
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tar cvzf $HOME/${{ github.event.repository.name }}.tar.gz ./*
+          git clone  https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b 4.1 --depth=1
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          # Use composer.json for key, if composer.lock is not committed.
+          # key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: |
+          cd ec-cube
+          composer install --no-progress --prefer-dist --optimize-autoloader
+          composer require stripe/stripe-php
+
+      - name: Setup EC-CUBE
+        run: |
+          cd ec-cube
+          bin/console doctrine:schema:create
+          bin/console eccube:fixtures:load
+
+      - name: Install Plugin
+        run: |
+          cd ec-cube
+          bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
+          bin/console cache:clear --no-warmup
+          bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
+
+      - name: PHPStan
+        run: |
+          cd ec-cube
+          composer require phpstan/phpstan --dev
+          vendor/bin/phpstan analyze -l 0 app/Plugin/${{ github.event.repository.name }} --error-format=github
