@@ -21,6 +21,7 @@ use Plugin\Stripe4\Service\Method\CreditCard;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
@@ -56,12 +57,7 @@ class CreditCardExtension extends AbstractTypeExtension
 
                 if ($order->getPayment()->getMethodClass() === CreditCard::class) {
                     $form
-                        ->add('stripe_payment_method_id', HiddenType::class, [
-                            'mapped' => true,
-                            'constraints' => [
-                                new NotBlank()
-                            ]
-                        ]);
+                        ->add('stripe_payment_method_id', HiddenType::class);
 
                     if ($Customer = $order->getCustomer()) {
                         $form
@@ -74,6 +70,22 @@ class CreditCardExtension extends AbstractTypeExtension
                                 'expanded' => true,
                                 'choices' => $order->getCustomer()->getCreditCards()
                             ]);
+                    }
+                }
+            });
+
+        $builder
+            ->addEventListener(FormEvents::SUBMIT, function (FormEvent $event) {
+                /** @var FormInterface $form */
+                $form = $event->getForm();
+                /** @var Order $order */
+                $order = $event->getData();
+
+                if ($order->getPayment()->getMethodClass() === CreditCard::class) {
+                    if($form->has('stripe_payment_method_id')) {
+                        if (null === $order->getStripePaymentMethodId()) {
+                            $form->get('stripe_payment_method_id')->addError(new FormError(trans('エラーが発生しました')));
+                        }
                     }
                 }
             });
