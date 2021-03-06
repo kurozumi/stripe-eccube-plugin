@@ -44,7 +44,7 @@ class ConfigType extends AbstractType
                     !getenv('STRIPE_PUBLIC_KEY') ||
                     !getenv('STRIPE_SECRET_KEY')
                 ) {
-                    $form->addError(new FormError('公開可能キーまたはシークレットキーが設定されていません。'));
+                    $form->addError(new FormError('APIキーが設定されていません。'));
                 }
             });
     }
