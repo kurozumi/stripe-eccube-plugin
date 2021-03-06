@@ -33,6 +33,7 @@ use Stripe\Customer;
 use Stripe\Exception\CardException;
 use Stripe\PaymentIntent;
 use Stripe\PaymentMethod;
+use Stripe\Refund;
 use Stripe\Stripe;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
@@ -120,6 +121,10 @@ class PaymentController extends AbstractShoppingController
     }
 
     /**
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Stripe\Exception\ApiErrorException
+     *
      * @Route("/stripe_payment", name="stripe_payment")
      */
     public function payment(Request $request)
@@ -166,7 +171,7 @@ class PaymentController extends AbstractShoppingController
                 log_info("[Stripe]PaymentIntent生成");
                 $intent = PaymentIntent::create($paymentIntentData);
 
-                if ($intent->status == "requires_action") {
+                if ($intent->status === "requires_action") {
                     $intent->confirm([
                         'return_url' => $this->generateUrl('stripe_reciever', [], UrlGeneratorInterface::ABSOLUTE_URL)
                     ]);
@@ -174,20 +179,26 @@ class PaymentController extends AbstractShoppingController
             } else {
                 throw new CardException('[Stripe]クレジットカード情報が正しくありません。');
             }
+
+            return $this->generateResponse($intent, $Order);
         } catch (\Exception $e) {
             log_error("[Stripe]" . $e->getMessage());
+
+            Refund::create([
+                'payment_intent' => $intent->id
+            ]);
 
             $this->rollbackOrder($Order);
 
             $this->addError($e->getMessage());
             return $this->redirectToRoute('shopping_error');
         }
-
-        return $this->generateResponse($intent, $Order);
     }
 
     /**
      * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Stripe\Exception\ApiErrorException
      *
      * @Route("/stripe_reciever", name="stripe_reciever")
      */
@@ -213,14 +224,18 @@ class PaymentController extends AbstractShoppingController
             } else {
                 throw new CardException('[Stripe]決済エラー。');
             }
+
+            return $this->generateResponse($intent, $Order);
         } catch (\Exception $e) {
             log_error("[Stripe]" . $e->getMessage());
+
+            Refund::create([
+                'payment_intent' => $request->query->get('payment_intent')
+            ]);
 
             $this->addError($e->getMessage());
             return $this->redirectToRoute('shopping_error');
         }
-
-        return $this->generateResponse($intent, $Order);
     }
 
     public function generateResponse(PaymentIntent $intent, Order $Order)
