@@ -58,6 +58,6 @@ stripe.shopping.cvs.error: 'コンビニ決済に失敗しました。'
 
 
 stripe.admin.nav.config: '設定'
-stripe.admin.caputure.actual_sales: '仮実同時処理'
-stripe.admin.caputure.provisional_sales: '仮売上処理'
+stripe.admin.capture.actual_sales: '仮実同時処理'
+stripe.admin.capture.provisional_sales: '仮売上処理'
 stripe.shopping.order_not_found: '注文情報が見つかりません'

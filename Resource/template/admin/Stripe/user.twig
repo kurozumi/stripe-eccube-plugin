@@ -23,11 +23,19 @@
                         <div class="card-header"><span>{{ 'stripe.admin.config.header'|trans }}</span></div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-3"><span>{{ 'stripe.admin.config.capture'|trans }}</span><span
+                                <div class="col-3"><span>{{ '公開可能キー'|trans }}</span><span
                                         class="badge badge-primary ml-1">{{ 'stripe.admin.config.required'|trans }}</span></div>
                                 <div class="col mb-2">
-                                    {{ form_widget(form.capture) }}
-                                    {{ form_errors(form.capture) }}
+                                    {{ form_widget(form.public_key) }}
+                                    {{ form_errors(form.public_key) }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3"><span>{{ 'シークレットキー'|trans }}</span><span
+                                        class="badge badge-primary ml-1">{{ 'stripe.admin.config.required'|trans }}</span></div>
+                                <div class="col mb-2">
+                                    {{ form_widget(form.secret_key) }}
+                                    {{ form_errors(form.secret_key) }}
                                 </div>
                             </div>
                         </div>

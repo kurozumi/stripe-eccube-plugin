@@ -38,7 +38,7 @@ class Nav implements EccubeNav
                 'children' => [
                     'stripe_admin_config' => [
                         'name' => 'stripe.admin.nav.config',
-                        'url' => 'stripe4_admin_config'
+                        'url' => 'stripe4_admin_stripe_config'
                     ]
                 ]
             ]

@@ -1,4 +1,4 @@
-name: CI/CD for EC-CUBE4 Plugin with Composer:v1
+name: CI/CD for EC-CUBE4 Plugin
 on: [workflow_dispatch, pull_request]
 jobs:
   phpunit:
@@ -9,6 +9,7 @@ jobs:
       matrix:
         eccube-versions: ['4.0','4.1']
         php-versions: [7.1,7.2,7.3,7.4]
+        composer: ['v1', 'v2']
         database: [mysql, pgsql]
         include:
           - database: mysql
@@ -41,22 +42,27 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@master
+      - name: Checkout EC-CUBE
+        uses: actions/checkout@v2
+        with:
+          repository: EC-CUBE/ec-cube
+          ref: ${{ matrix.eccube-versions }}
 
-      - name: Setup PHP, with composer and extensions
+      - name: Setup PHP, with composer v1 and extensions
+        if: matrix.eccube-versions == '4.0'
         uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xml, ctype, iconv, mysql, intl
           tools: composer:v1
 
-      - name: Clone EC-CUBE
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tar cvzf $HOME/${{ github.event.repository.name }}.tar.gz ./*
-          git clone  https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b ${{ matrix.eccube-versions }} --depth=1
+      - name: Setup PHP, with composer and extensions
+        if: matrix.eccube-versions != '4.0'
+        uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: mbstring, xml, ctype, iconv, mysql, intl
+          tools: composer:${{ matrix.composer }}
 
       - name: Get composer cache directory
         id: composer-cache
@@ -73,26 +79,21 @@ jobs:
 
       - name: Install Composer dependencies
         run : |
-          cd ec-cube
-          composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+          composer install --no-progress --prefer-dist --optimize-autoloader
           composer require --dev kiy0taka/eccube4-test-fixer
           composer require stripe/stripe-php
 
-      - name: Setup EC-CUBE
-        run: |
-          cd ec-cube
-          bin/console doctrine:schema:create
-          bin/console eccube:fixtures:load
-        env:
-          DATABASE_URL: ${{ matrix.database_url }}
-          DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: app/Plugin/${{ github.event.repository.name }}
 
-      - name: Install Plugin
+      - name: Setup EC-CUBE and Plugin
         run: |
-          cd ec-cube
-          bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
+          composer compile
+          bin/console eccube:plugin:install --code ${{ github.event.repository.name }}
           bin/console cache:clear --no-warmup
-          bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
+          bin/console eccube:plugin:enable --code ${{ github.event.repository.name }}
         env:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
@@ -100,7 +101,6 @@ jobs:
       - name: Run Tests for EC-CUBE4.0
         if: matrix.eccube-versions == '4.0'
         run: |
-          cd ec-cube
           find app/Plugin/${{ github.event.repository.name }}/Tests -name "*Test.php" | while read TESTCASE
           do
             bin/phpunit --include-path vendor/kiy0taka/eccube4-test-fixer/src --loader 'Eccube\PHPUnit\Loader\Eccube4CompatTestSuiteLoader' ${TESTCASE}
@@ -112,7 +112,6 @@ jobs:
       - name: Run Tests
         if: matrix.eccube-versions != '4.0'
         run: |
-          cd ec-cube
           bin/phpunit app/Plugin/${{ github.event.repository.name }}/Tests
         env:
           DATABASE_URL: ${{ matrix.database_url }}
@@ -120,7 +119,6 @@ jobs:
 
       - name: Update Plugin
         run: |
-          cd ec-cube
           bin/console eccube:plugin:update ${{ github.event.repository.name }}
         env:
           DATABASE_URL: ${{ matrix.database_url }}
@@ -128,7 +126,6 @@ jobs:
 
       - name: Uninstall Plugin
         run: |
-          cd ec-cube
           bin/console eccube:plugin:uninstall --code=${{ github.event.repository.name }}
         env:
           DATABASE_URL: ${{ matrix.database_url }}
