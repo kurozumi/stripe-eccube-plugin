@@ -215,6 +215,7 @@ class PaymentController extends AbstractShoppingController
                     ]);
                 }
 
+                /** @var Order $Order */
                 $Order = $this->orderRepository->findOneBy([
                     'stripe_payment_method_id' => $intent->payment_method,
                     'OrderStatus' => OrderStatus::PENDING
@@ -223,6 +224,10 @@ class PaymentController extends AbstractShoppingController
                 if (null === $Order) {
                     throw new \Exception("受注情報が存在しません");
                 }
+
+                logs('stripe')->info('PaymentIntent保存', [$Order->getId()]);
+                $Order->setStripePaymentIntentId($intent->id);
+                $this->entityManager->flush();
             } else {
                 throw new CardException('決済エラー');
             }
@@ -350,8 +355,9 @@ class PaymentController extends AbstractShoppingController
      */
     protected function createRefund(PaymentIntent $intent)
     {
-        if ($intent->capture_method === 'automatic') {
+        if ($intent->status === 'succeeded') {
             logs('stripe')->info('返金処理を行います');
+            logs('stripe')->info($intent);
             Refund::create(['payment_intent' => $intent->id]);
         }
     }
