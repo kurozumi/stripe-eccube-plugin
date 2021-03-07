@@ -171,6 +171,8 @@ class PaymentController extends AbstractShoppingController
 
                 logs('stripe')->info('PaymentIntent生成', [$Order->getId()]);
                 $intent = PaymentIntent::create($paymentIntentData);
+                $Order->setStripePaymentIntentId($intent->id);
+                $this->entityManager->flush();
                 logs('stripe')->info($intent->status);
 
                 if ($intent->status === "requires_action") {
@@ -226,10 +228,6 @@ class PaymentController extends AbstractShoppingController
                 if (null === $Order) {
                     throw new \Exception("受注情報が存在しません");
                 }
-
-                logs('stripe')->info('PaymentIntent保存', [$Order->getId()]);
-                $Order->setStripePaymentIntentId($intent->id);
-                $this->entityManager->flush();
             } else {
                 throw new CardException('決済エラー');
             }
@@ -284,9 +282,6 @@ class PaymentController extends AbstractShoppingController
                 logs('stripe')->info('受注ステータスを新規受付へ変更', [$Order->getId()]);
                 $OrderStatus = $this->orderStatusRepository->find(OrderStatus::NEW);
                 $Order->setOrderStatus($OrderStatus);
-
-                logs('stripe')->info('PaymentIntent保存', [$Order->getId()]);
-                $Order->setStripePaymentIntentId($intent->id);
 
                 if ($this->config->getCapture()) {
                     logs('stripe')->info('決済ステータスを実売上へ変更', [$Order->getId()]);
