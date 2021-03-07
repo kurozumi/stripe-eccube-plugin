@@ -36,8 +36,8 @@ use Stripe\PaymentMethod;
 use Stripe\Refund;
 use Stripe\Stripe;
 use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -122,13 +122,12 @@ class PaymentController extends AbstractShoppingController
     }
 
     /**
-     * @param Request $request
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @return RedirectResponse
      * @throws \Stripe\Exception\ApiErrorException
      *
      * @Route("/stripe_payment", name="stripe_payment")
      */
-    public function payment(Request $request)
+    public function payment(): RedirectResponse
     {
         // 受注情報の取得
         /** @var Order $Order 受注情報の取得 */
@@ -182,12 +181,12 @@ class PaymentController extends AbstractShoppingController
             }
 
             return $this->generateResponse($intent, $Order);
+
         } catch (\Exception $e) {
             logs('stripe')->error($e->getMessage());
 
-            if (isset($intent) && $intent->capture_method === 'automatic') {
-                logs('stripe')->info('返金処理を行います');
-                Refund::create(['payment_intent' => $intent->id]);
+            if (isset($intent)) {
+                $this->createRefund($intent);
             }
 
             $this->rollbackOrder($Order);
@@ -200,12 +199,12 @@ class PaymentController extends AbstractShoppingController
 
     /**
      * @param Request $request
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @return RedirectResponse
      * @throws \Stripe\Exception\ApiErrorException
      *
      * @Route("/stripe_receiver", name="stripe_receiver")
      */
-    public function receiver(Request $request)
+    public function receiver(Request $request): RedirectResponse
     {
         try {
             if (null !== $request->query->get('payment_intent')) {
@@ -229,12 +228,12 @@ class PaymentController extends AbstractShoppingController
             }
 
             return $this->generateResponse($intent, $Order);
+
         } catch (\Exception $e) {
             logs('stripe')->error($e->getMessage());
 
-            if (isset($intent) && $intent->capture_method === 'automatic') {
-                logs('stripe')->info('返金処理を行います');
-                Refund::create(['payment_intent' => $request->query->get('payment_intent')]);
+            if (isset($intent)) {
+                $this->createRefund($intent);
             }
 
             $this->addError($e->getMessage());
@@ -246,11 +245,11 @@ class PaymentController extends AbstractShoppingController
     /**
      * @param PaymentIntent $intent
      * @param Order $Order
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @return RedirectResponse
      * @throws \Eccube\Service\PurchaseFlow\PurchaseException
      * @throws \Stripe\Exception\ApiErrorException
      */
-    protected function generateResponse(PaymentIntent $intent, Order $Order)
+    protected function generateResponse(PaymentIntent $intent, Order $Order): RedirectResponse
     {
         logs('stripe')->info($intent->status);
 
@@ -272,7 +271,7 @@ class PaymentController extends AbstractShoppingController
 
                 $message = "Your card was denied, please provide a new payment method";
                 logs('stripe')->error($message);
-                return $this->redirectToRoute("shopping_error");
+                return $this->redirectToRoute('shopping_error');
             case "succeeded":
             case "requires_capture":
                 logs('stripe')->info('受注ステータスを新規受付へ変更', [$Order->getId()]);
@@ -318,30 +317,49 @@ class PaymentController extends AbstractShoppingController
                 logs('stripe')->info('purchaseFlow::commitを呼び出し、購入処理をさせる', [$Order->getId()]);
                 $this->purchaseFlow->commit($Order, new PurchaseContext());
 
-                logs('stripe')->info('注文メールの送信を行います', [$Order->getId()]);
-                $this->mailService->sendOrderMail($Order);
+                $this->completeShopping($Order);
 
-                logs('stripe')->info('カートをクリアします', [$Order->getId()]);
-                $this->cartService->clear();
-
-                logs('stripe')->info('受注IDをセッションにセット', [$Order->getId()]);
-                $this->session->set(OrderHelper::SESSION_ORDER_ID, $Order->getId());
-
-                $this->entityManager->flush();
-
-                logs('stripe')->info('注文処理が完了しました. 購入完了画面へ遷移します.', [$Order->getId()]);
-
-                return $this->redirectToRoute("shopping_complete");
+                return $this->redirectToRoute('shopping_complete');
+            default:
+                return $this->redirectToRoute('shopping_error');
         }
-
-        throw new BadRequestHttpException();
     }
-
 
     /**
      * @param Order $Order
      */
-    private function rollbackOrder(Order $Order)
+    protected function completeShopping(Order $Order)
+    {
+        logs('stripe')->info('注文メールの送信を行います', [$Order->getId()]);
+        $this->mailService->sendOrderMail($Order);
+
+        logs('stripe')->info('カートをクリアします', [$Order->getId()]);
+        $this->cartService->clear();
+
+        logs('stripe')->info('受注IDをセッションにセット', [$Order->getId()]);
+        $this->session->set(OrderHelper::SESSION_ORDER_ID, $Order->getId());
+
+        $this->entityManager->flush();
+
+        logs('stripe')->info('注文処理が完了しました. 購入完了画面へ遷移します.', [$Order->getId()]);
+    }
+
+    /**
+     * @param PaymentIntent $intent
+     * @throws \Stripe\Exception\ApiErrorException
+     */
+    protected function createRefund(PaymentIntent $intent)
+    {
+        if ($intent->capture_method === 'automatic') {
+            logs('stripe')->info('返金処理を行います');
+            Refund::create(['payment_intent' => $intent->id]);
+        }
+    }
+
+    /**
+     * @param Order $Order
+     */
+    protected function rollbackOrder(Order $Order)
     {
         logs('stripe')->info('受注ステータスを購入処理中へ変更');
         $OrderStatus = $this->orderStatusRepository->find(OrderStatus::PROCESSING);
