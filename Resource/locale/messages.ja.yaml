@@ -61,3 +61,6 @@ stripe.admin.nav.config: '設定'
 stripe.admin.capture.actual_sales: '仮実同時処理'
 stripe.admin.capture.provisional_sales: '仮売上処理'
 stripe.shopping.order_not_found: '注文情報が見つかりません'
+
+
+stripe.admin.order.edit.payment_indent.label: 'Stripe ID'
