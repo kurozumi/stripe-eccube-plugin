@@ -29,7 +29,7 @@ class PaymentControllerTest extends AbstractAdminWebTestCase
 
     public function test直接アクセスした場合はエラーページへリダイレクト()
     {
-        $this->client->request('GET', $this->generateUrl('stripe_payment'));
+        $this->client->request('GET', $this->generateUrl('shopping_stripe_payment'));
 
         self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('shopping_error')));
     }

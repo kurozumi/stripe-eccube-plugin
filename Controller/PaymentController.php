@@ -45,7 +45,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * Class StripeController
  * @package Plugin\Stripe4\Controller
  *
- * @Route("/shopping")
+ * @Route("/shopping/stripe")
  */
 class PaymentController extends AbstractShoppingController
 {
@@ -125,7 +125,7 @@ class PaymentController extends AbstractShoppingController
      * @return RedirectResponse
      * @throws \Stripe\Exception\ApiErrorException
      *
-     * @Route("/stripe_payment", name="stripe_payment")
+     * @Route("/payment", name="shopping_stripe_payment")
      */
     public function payment(): RedirectResponse
     {
@@ -173,7 +173,7 @@ class PaymentController extends AbstractShoppingController
 
                 if ($intent->status === "requires_action") {
                     $intent->confirm([
-                        'return_url' => $this->generateUrl('stripe_receiver', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                        'return_url' => $this->generateUrl('shopping_stripe_callback', [], UrlGeneratorInterface::ABSOLUTE_URL)
                     ]);
                 }
             } else {
@@ -202,16 +202,16 @@ class PaymentController extends AbstractShoppingController
      * @return RedirectResponse
      * @throws \Stripe\Exception\ApiErrorException
      *
-     * @Route("/stripe_receiver", name="stripe_receiver")
+     * @Route("/callback", name="shopping_stripe_callback")
      */
-    public function receiver(Request $request): RedirectResponse
+    public function callback(Request $request): RedirectResponse
     {
         try {
             if (null !== $request->query->get('payment_intent')) {
                 $intent = PaymentIntent::retrieve($request->query->get('payment_intent'));
                 if ($intent->status == "requires_confirmation") {
                     $intent->confirm([
-                        'return_url' => $this->generateUrl('stripe_receiver', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                        'return_url' => $this->generateUrl('shopping_stripe_callback', [], UrlGeneratorInterface::ABSOLUTE_URL)
                     ]);
                 }
 
