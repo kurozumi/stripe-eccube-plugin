@@ -163,6 +163,7 @@ class PaymentController extends AbstractShoppingController
                             $stripeCustomer = Customer::create([
                                 "email" => $Order->getCustomer()->getEmail()
                             ]);
+                            logs('stripe')->info($stripeCustomer->status);
                             $paymentIntentData['customer'] = $stripeCustomer->id;
                         }
                     }
@@ -170,6 +171,7 @@ class PaymentController extends AbstractShoppingController
 
                 logs('stripe')->info('PaymentIntent生成', [$Order->getId()]);
                 $intent = PaymentIntent::create($paymentIntentData);
+                logs('stripe')->info($intent->status);
 
                 if ($intent->status === "requires_action") {
                     $intent->confirm([
@@ -357,8 +359,8 @@ class PaymentController extends AbstractShoppingController
     {
         if ($intent->status === 'succeeded') {
             logs('stripe')->info('返金処理を行います');
-            logs('stripe')->info($intent);
-            Refund::create(['payment_intent' => $intent->id]);
+            $refund = Refund::create(['payment_intent' => $intent->id]);
+            logs('stripe')->info($refund->status);
         }
     }
 
