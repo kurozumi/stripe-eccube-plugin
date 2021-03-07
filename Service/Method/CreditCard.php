@@ -150,7 +150,7 @@ class CreditCard implements PaymentMethodInterface
 
         // 3Dセキュア画面へリダイレクト
         $dispatcher = new PaymentDispatcher();
-        $dispatcher->setRoute('stripe_payment');
+        $dispatcher->setRoute('shopping_stripe_payment');
         $dispatcher->setForward(true);
 
         return $dispatcher;
