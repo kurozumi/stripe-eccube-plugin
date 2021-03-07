@@ -37,6 +37,7 @@ use Stripe\Refund;
 use Stripe\Stripe;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -134,7 +135,7 @@ class PaymentController extends AbstractShoppingController
         $Order = $this->parameterBag->get('stripe.Order');
 
         if (!$Order) {
-            log_info('[Stripe][注文処理] 受注情報が存在しません.');
+            logs('stripe')->info('受注情報が存在しません');
 
             return $this->redirectToRoute('shopping_error');
         }
@@ -143,7 +144,7 @@ class PaymentController extends AbstractShoppingController
 
         try {
             if (null !== $paymentMethodId) {
-                log_info("[Stripe]決済処理開始");
+                logs('stripe')->info('決済処理開始', [$Order->getId()]);
 
                 $paymentIntentData = [
                     "amount" => (int)$Order->getPaymentTotal(),
@@ -154,7 +155,7 @@ class PaymentController extends AbstractShoppingController
                     "capture_method" => $this->config->getCapture() ? "automatic" : "manual",
                 ];
 
-                if($Order->getCustomer())  {
+                if ($Order->getCustomer()) {
                     if ($Order->getCustomer()->getCreditCards()->count() > 0) {
                         $stripeCustomer = $Order->getCustomer()->getCreditCards()->first()->getStripeCustomerId();
                         $paymentIntentData['customer'] = $stripeCustomer;
@@ -168,29 +169,31 @@ class PaymentController extends AbstractShoppingController
                     }
                 }
 
-                log_info("[Stripe]PaymentIntent生成");
+                logs('stripe')->info('PaymentIntent生成', [$Order->getId()]);
                 $intent = PaymentIntent::create($paymentIntentData);
 
                 if ($intent->status === "requires_action") {
                     $intent->confirm([
-                        'return_url' => $this->generateUrl('stripe_reciever', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                        'return_url' => $this->generateUrl('stripe_receiver', [], UrlGeneratorInterface::ABSOLUTE_URL)
                     ]);
                 }
             } else {
-                throw new CardException('[Stripe]クレジットカード情報が正しくありません。');
+                throw new CardException('クレジットカード情報が正しくありません。');
             }
 
             return $this->generateResponse($intent, $Order);
         } catch (\Exception $e) {
-            log_error("[Stripe]" . $e->getMessage());
+            logs('stripe')->error($e->getMessage());
 
-            Refund::create([
-                'payment_intent' => $intent->id
-            ]);
+            if (isset($intent) && $intent->capture_method === 'automatic') {
+                logs('stripe')->info('返金処理を行います');
+                Refund::create(['payment_intent' => $intent->id]);
+            }
 
             $this->rollbackOrder($Order);
 
             $this->addError($e->getMessage());
+
             return $this->redirectToRoute('shopping_error');
         }
     }
@@ -200,16 +203,16 @@ class PaymentController extends AbstractShoppingController
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Stripe\Exception\ApiErrorException
      *
-     * @Route("/stripe_reciever", name="stripe_reciever")
+     * @Route("/stripe_receiver", name="stripe_receiver")
      */
-    public function reciever(Request $request)
+    public function receiver(Request $request)
     {
         try {
             if (null !== $request->query->get('payment_intent')) {
                 $intent = PaymentIntent::retrieve($request->query->get('payment_intent'));
                 if ($intent->status == "requires_confirmation") {
                     $intent->confirm([
-                        'return_url' => $this->generateUrl('stripe_reciever', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                        'return_url' => $this->generateUrl('stripe_receiver', [], UrlGeneratorInterface::ABSOLUTE_URL)
                     ]);
                 }
 
@@ -219,36 +222,47 @@ class PaymentController extends AbstractShoppingController
                 ]);
 
                 if (null === $Order) {
-                    throw new \Exception("[Stripe]受注情報が存在しません。");
+                    throw new \Exception("受注情報が存在しません");
                 }
             } else {
-                throw new CardException('[Stripe]決済エラー。');
+                throw new CardException('決済エラー');
             }
 
             return $this->generateResponse($intent, $Order);
         } catch (\Exception $e) {
-            log_error("[Stripe]" . $e->getMessage());
+            logs('stripe')->error($e->getMessage());
 
-            Refund::create([
-                'payment_intent' => $request->query->get('payment_intent')
-            ]);
+            if (isset($intent) && $intent->capture_method === 'automatic') {
+                logs('stripe')->info('返金処理を行います');
+                Refund::create(['payment_intent' => $request->query->get('payment_intent')]);
+            }
 
             $this->addError($e->getMessage());
+
             return $this->redirectToRoute('shopping_error');
         }
     }
 
-    public function generateResponse(PaymentIntent $intent, Order $Order)
+    /**
+     * @param PaymentIntent $intent
+     * @param Order $Order
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Eccube\Service\PurchaseFlow\PurchaseException
+     * @throws \Stripe\Exception\ApiErrorException
+     */
+    protected function generateResponse(PaymentIntent $intent, Order $Order)
     {
+        logs('stripe')->info($intent->status);
+
         switch ($intent->status) {
             case "requires_action":
             case "requires_source_action":
-                log_info("[Stripe]3Dセキュア認証ページへリダイレクト");
+                logs('stripe')->info($intent->description);
                 return $this->redirect($intent->next_action->redirect_to_url->url);
             case "requires_payment_method":
             case "requires_source":
                 // Card was not properly authenticated, suggest a new payment method
-                log_error('[Stripe]決済エラー');
+                logs('stripe')->error($intent->description);
 
                 // 決済ステータスを未決済へ変更
                 $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::OUTSTANDING);
@@ -257,23 +271,23 @@ class PaymentController extends AbstractShoppingController
                 $this->rollbackOrder($Order);
 
                 $message = "Your card was denied, please provide a new payment method";
-                $this->addError($message);
+                logs('stripe')->error($message);
                 return $this->redirectToRoute("shopping_error");
             case "succeeded":
             case "requires_capture":
-                // 受注ステータスを新規受付へ変更
+                logs('stripe')->info('受注ステータスを新規受付へ変更', [$Order->getId()]);
                 $OrderStatus = $this->orderStatusRepository->find(OrderStatus::NEW);
                 $Order->setOrderStatus($OrderStatus);
 
-                // PaymentIntent保存
+                logs('stripe')->info('PaymentIntent保存', [$Order->getId()]);
                 $Order->setStripePaymentIntentId($intent->id);
 
                 if ($this->config->getCapture()) {
-                    // 決済ステータスを実売上へ変更
+                    logs('stripe')->info('決済ステータスを実売上へ変更', [$Order->getId()]);
                     $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::ACTUAL_SALES);
                     $Order->setStripePaymentStatus($PaymentStatus);
                 } else {
-                    // 決済ステータスを仮売上へ変更
+                    logs('stripe')->info('決済ステータスを仮売上へ変更', [$Order->getId()]);
                     $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::PROVISIONAL_SALES);
                     $Order->setStripePaymentStatus($PaymentStatus);
                 }
@@ -288,7 +302,7 @@ class PaymentController extends AbstractShoppingController
 
                     // DBに未登録の場合保存
                     if (null === $creditCard) {
-                        log_info("[Stripe]クレジットカード情報を保存");
+                        logs('stripe')->info('クレジットカード情報を保存');
                         $creditCard = new CreditCard();
                         $creditCard
                             ->setCustomer($Order->getCustomer())
@@ -301,24 +315,26 @@ class PaymentController extends AbstractShoppingController
                     }
                 }
 
-                // purchaseFlow::commitを呼び出し、購入処理をさせる
+                logs('stripe')->info('purchaseFlow::commitを呼び出し、購入処理をさせる', [$Order->getId()]);
                 $this->purchaseFlow->commit($Order, new PurchaseContext());
 
-                log_info('[Stripe][注文処理] カートをクリアします.', [$Order->getId()]);
+                logs('stripe')->info('注文メールの送信を行います', [$Order->getId()]);
+                $this->mailService->sendOrderMail($Order);
+
+                logs('stripe')->info('カートをクリアします', [$Order->getId()]);
                 $this->cartService->clear();
 
-                // 受注IDをセッションにセット
+                logs('stripe')->info('受注IDをセッションにセット', [$Order->getId()]);
                 $this->session->set(OrderHelper::SESSION_ORDER_ID, $Order->getId());
 
-                // メール送信
-                log_info('[注文処理] 注文メールの送信を行います.', [$Order->getId()]);
-                $this->mailService->sendOrderMail($Order);
                 $this->entityManager->flush();
 
-                log_info('[注文処理] 注文処理が完了しました. 購入完了画面へ遷移します.', [$Order->getId()]);
+                logs('stripe')->info('注文処理が完了しました. 購入完了画面へ遷移します.', [$Order->getId()]);
 
                 return $this->redirectToRoute("shopping_complete");
         }
+
+        throw new BadRequestHttpException();
     }
 
 
@@ -327,11 +343,11 @@ class PaymentController extends AbstractShoppingController
      */
     private function rollbackOrder(Order $Order)
     {
-        // 受注ステータスを購入処理中へ変更
+        logs('stripe')->info('受注ステータスを購入処理中へ変更');
         $OrderStatus = $this->orderStatusRepository->find(OrderStatus::PROCESSING);
         $Order->setOrderStatus($OrderStatus);
 
-        // 仮確定の取り消し
+        logs('stripe')->info('仮確定の取り消し');
         $this->purchaseFlow->rollback($Order, new PurchaseContext());
 
         $this->entityManager->flush();

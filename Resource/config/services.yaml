@@ -7,3 +7,19 @@ parameters:
 twig:
   globals:
     stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
+
+monolog:
+  channels: ['stripe']
+  handlers:
+    stripe:
+      type: fingers_crossed
+      action_level: error
+      passthru_level: info
+      handler: stripe_rotating_file
+      channels: [ 'stripe' ]
+    stripe_rotating_file:
+      type: rotating_file
+      max_files: 60
+      path: '%kernel.logs_dir%/%kernel.environment%/stripe.log'
+      formatter: eccube.log.formatter.line
+      level: debug
