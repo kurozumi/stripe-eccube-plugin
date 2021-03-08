@@ -39,7 +39,7 @@ class OrderTypeExtension extends AbstractTypeExtension
         return OrderType::class;
     }
 
-    public function getExtendedTypes(): iterable
+    public static function getExtendedTypes(): iterable
     {
         yield OrderType::class;
     }
