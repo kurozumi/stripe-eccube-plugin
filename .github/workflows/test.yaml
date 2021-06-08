@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        eccube-versions: ['4.0','4.1']
+        eccube-versions: ['4.0','4.1-beta2']
         php-versions: [7.1,7.2,7.3,7.4]
         composer: ['v1', 'v2']
         database: [mysql, pgsql]
@@ -80,8 +80,12 @@ jobs:
       - name: Install Composer dependencies
         run : |
           composer install --no-progress --prefer-dist --optimize-autoloader
-          composer require --dev kiy0taka/eccube4-test-fixer
           composer require stripe/stripe-php
+
+      - name: Install Composer dependencies for EC-CUBE4.0
+        if: matrix.eccube-versions == '4.0'
+        run: |
+          composer require --dev kiy0taka/eccube4-test-fixer
 
       - name: Checkout
         uses: actions/checkout@v2

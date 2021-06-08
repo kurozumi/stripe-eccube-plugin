@@ -1,6 +1,6 @@
 {#
-    Shopping/index.twigに追記
-    {{ include('@Stripe4/credit.twig', ignore_missing=true) }}
+Shopping/index.twigに追記
+{{ include('@Stripe4/credit.twig', ignore_missing=true) }}
 #}
 {% if Order.Payment.getMethodClass == 'Plugin\\Stripe4\\Service\\Method\\CreditCard' %}
     <div class="ec-orderPayment">
@@ -43,8 +43,10 @@
                 {% endif %}
 
                 <!-- ここにエラーメッセージが表示される -->
-                <div id="card-errors" class="text-danger small mb-lg-5" role="alert"></div>
                 {{ form_widget(form.stripe_payment_method_id) }}
+                <div id="card-errors" class="text-danger small mb-lg-5" role="alert">
+                    {{ form_errors(form.stripe_payment_method_id) }}
+                </div>
             </div>
         </div>
 
@@ -82,12 +84,17 @@
 
             // 入力変更時のリスナー
             // バリデーションメッセージを表示する
-            card.addEventListener('change', function (event) {
+            card.addEventListener('change', async (event) => {
                 const displayError = document.getElementById('card-errors');
-                if (event.error) {
-                    displayError.textContent = event.error.message;
+                if (event.complete) {
+                    await createStripePaymentMethod(card);
                 } else {
-                    displayError.textContent = '';
+                    if (event.error) {
+                        displayError.textContent = event.error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                    $('#{{ form.stripe_payment_method_id.vars.id }}').val('');
                 }
             });
 
@@ -110,14 +117,10 @@
                         const stripePaymentMethod = $('#{{ form.cards.vars.id }} input:checked').val();
                         if (stripePaymentMethod && $('#stripe-card:visible').length == 0) {
                             $('#{{ form.stripe_payment_method_id.vars.id }}').val(stripePaymentMethod);
-                            form.submit();
-                        } else {
-                            await createStripePaymentMethod(card);
                         }
-                        {% else %}
-                            await createStripePaymentMethod(card);
                         {% endif %}
 
+                        form.submit();
                     });
                 }
             }
@@ -134,7 +137,6 @@
                             showStripeErrorMessage(result.error.message);
                         } else {
                             $('#{{ form.stripe_payment_method_id.vars.id }}').val(result.paymentMethod.id);
-                            form.submit();
                         }
                     });
             }

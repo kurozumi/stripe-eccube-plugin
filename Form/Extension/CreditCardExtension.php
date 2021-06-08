@@ -57,7 +57,9 @@ class CreditCardExtension extends AbstractTypeExtension
 
                 if ($order->getPayment()->getMethodClass() === CreditCard::class) {
                     $form
-                        ->add('stripe_payment_method_id', HiddenType::class);
+                        ->add('stripe_payment_method_id', HiddenType::class, [
+                            'error_bubbling' => false
+                        ]);
 
                     if ($Customer = $order->getCustomer()) {
                         $form
@@ -82,9 +84,13 @@ class CreditCardExtension extends AbstractTypeExtension
                 $order = $event->getData();
 
                 if ($order->getPayment()->getMethodClass() === CreditCard::class) {
-                    if($form->has('stripe_payment_method_id')) {
+                    if ($form->get('redirect_to')->getData()) {
+                        return;
+                    }
+
+                    if ($form->has('stripe_payment_method_id')) {
                         if (null === $order->getStripePaymentMethodId()) {
-                            $form->get('stripe_payment_method_id')->addError(new FormError(trans('エラーが発生しました')));
+                            $form->get('stripe_payment_method_id')->addError(new FormError(trans('クレジットカード情報を入力してください。')));
                         }
                     }
                 }
@@ -94,9 +100,8 @@ class CreditCardExtension extends AbstractTypeExtension
     /**
      * @inheritDoc
      */
-    public function getExtendedType()
+    public function getExtendedType(): string
     {
-        // TODO: Implement getExtendedType() method.
         return OrderType::class;
     }
 
