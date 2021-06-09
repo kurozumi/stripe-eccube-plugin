@@ -11,15 +11,14 @@ EC-CUBE4でStripeでクレジットカード決済ができるプラグインの
 composer require stripe/stripe-php
 ```
 
-#### EC-CUBEの認証キーを設定をインストールしている場合
+#### EC-CUBEの認証キーを設定している場合のライブラリのインストール方法
 ```
 bin/console eccube:composer:require stripe/stripe-php
 ```
 
 #### GitHubからプラグインをクローン
 ```
-cd app/Plugin
-git clone git@github.com:kurozumi/Stripe4.git
+git clone git@github.com:kurozumi/Stripe4.git app/Plugin
 ```
 
 #### プラグインのインストールと有効化
