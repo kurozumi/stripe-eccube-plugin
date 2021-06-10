@@ -27,7 +27,6 @@ use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Stripe\Stripe;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class CreditCard implements PaymentMethodInterface
 {
@@ -69,18 +68,12 @@ class CreditCard implements PaymentMethodInterface
      */
     private $parameterBag;
 
-    /**
-     * @var SessionInterface
-     */
-    private $session;
-
     public function __construct(
         OrderStatusRepository $orderStatusRepository,
         PaymentStatusRepository $paymentStatusRepository,
         PurchaseFlow $shoppingPurchaseFlow,
         EccubeConfig $eccubeConfig,
-        ParameterBag $parameterBag,
-        SessionInterface $session
+        ParameterBag $parameterBag
     )
     {
         $this->eccubeConfig = $eccubeConfig;
@@ -90,7 +83,6 @@ class CreditCard implements PaymentMethodInterface
         $this->paymentStatusRepository = $paymentStatusRepository;
         $this->purchaseFlow = $shoppingPurchaseFlow;
         $this->parameterBag = $parameterBag;
-        $this->session = $session;
     }
 
     /**

@@ -155,17 +155,20 @@ class PaymentController extends AbstractShoppingController
                 ];
 
                 if ($Order->getCustomer()) {
-                    if ($Order->getCustomer()->getCreditCards()->count() > 0) {
-                        $stripeCustomer = $Order->getCustomer()->getCreditCards()->first()->getStripeCustomerId();
-                        $paymentIntentData['customer'] = $stripeCustomer;
-                    } else {
-                        if ($Order->getStripeSavingCard()) {
-                            $stripeCustomer = Customer::create([
-                                "email" => $Order->getCustomer()->getEmail()
-                            ]);
-                            logs('stripe')->info($stripeCustomer->status);
-                            $paymentIntentData['customer'] = $stripeCustomer->id;
-                        }
+                    /** @var CreditCard $creditCard */
+                    $creditCard = $this->creditCardRepository->findOneBy(['stripe_payment_method_id' => $paymentMethodId]);
+                    if ($creditCard) {
+                        $paymentIntentData['customer'] = $creditCard->getStripeCustomerId();
+                    }
+
+                    if ($Order->getStripeSavingCard()) {
+                        $stripeCustomer = Customer::create([
+                            "email" => $Order->getCustomer()->getEmail()
+                        ]);
+                        logs('stripe')->info($stripeCustomer->status);
+                        $paymentIntentData['customer'] = $stripeCustomer->id;
+                        $paymentMethod = PaymentMethod::retrieve($paymentMethodId);
+                        $paymentMethod->attach(['customer' => $stripeCustomer->id]);
                     }
                 }
 
