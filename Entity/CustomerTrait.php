@@ -13,8 +13,6 @@
 namespace Plugin\Stripe4\Entity;
 
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Eccube\Annotation\EntityExtension;
 
@@ -27,61 +25,36 @@ use Eccube\Annotation\EntityExtension;
 trait CustomerTrait
 {
     /**
-     * @var Collection
+     * @var string
      *
-     * @ORM\OneToMany(targetEntity="Plugin\Stripe4\Entity\CreditCard", mappedBy="Customer", cascade={"persist", "remove"})
+     * @ORM\Column(type="string", nullable=true)
      */
-    private $creditCards;
+    private $stripe_customer_id;
 
     /**
-     * @return Collection
+     * @return string|null
      */
-    public function getCreditCards(): Collection
+    public function getStripeCustomerId(): ?string
     {
-        if (null === $this->creditCards) {
-            $this->creditCards = new ArrayCollection();
-        }
-
-        return $this->creditCards;
+        return $this->stripe_customer_id;
     }
 
     /**
-     * @param CreditCard $creditCard
+     * @param string $stripe_customer_id
      * @return $this
      */
-    public function addCreditCard(CreditCard $creditCard): self
+    public function setStripeCustomerId(string $stripe_customer_id): self
     {
-        if (null === $this->creditCards) {
-            $this->creditCards = new ArrayCollection();
-        }
-
-        if (!$this->creditCards->contains($creditCard)) {
-            $this->creditCards[] = $creditCard;
-            $creditCard->setCustomer($this);
-        }
+        $this->stripe_customer_id = $stripe_customer_id;
 
         return $this;
     }
 
     /**
-     * @param CreditCard $creditCard
-     * @return $this
+     * @return bool
      */
-    public function removeCreditCard(CreditCard $creditCard): self
+    public function hasStripeCustomerId(): bool
     {
-        if (null === $this->creditCards) {
-            $this->creditCards = new ArrayCollection();
-        }
-
-        if ($this->creditCards->contains($creditCard)) {
-            $this->creditCards->removeElement($creditCard);
-
-            if($creditCard->getCustomer() === $this) {
-                $creditCard->setCustomer(null);
-            }
-        }
-
-        return $this;
+        return null !== $this->stripe_customer_id;
     }
-
 }
