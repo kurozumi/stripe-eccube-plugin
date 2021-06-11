@@ -2,8 +2,8 @@
 
 {% set menus = ['stripe', 'stripe_admin_config'] %}
 
-{% block title %}{{ 'stripe.admin.config.title'|trans }}{% endblock %}
-{% block sub_title %}{{ 'stripe.admin.config.sub_title'|trans }}{% endblock %}
+{% block title %}{{ 'stripe.admin.config.header'|trans }}{% endblock %}
+{% block sub_title %}{{ 'stripe.admin.config.title'|trans }}{% endblock %}
 
 {% form_theme form '@admin/Form/bootstrap_4_horizontal_layout.html.twig' %}
 
@@ -33,14 +33,14 @@
                         <div class="card-header"><span>{{ 'stripe.admin.config.header'|trans }}</span></div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-3"><span>{{ '公開可能キー'|trans }}</span><span
+                                <div class="col-3"><span>{{ 'APIキー'|trans }}</span><span
                                         class="badge badge-primary ml-1">{{ 'stripe.admin.config.required'|trans }}</span></div>
                                 <div class="col mb-2">
                                     {% if public_key %}
                                         <p><b>{{ public_key }}</b></p>
-                                        <p><a href="{{ url('stripe4_admin_stripe_user') }}">公開可能キーを変更する</a></p>
+                                        <p><a href="{{ url('stripe4_admin_stripe_user') }}">APIキーを変更する</a></p>
                                     {% else %}
-                                        <p><a href="{{ url('stripe4_admin_stripe_user') }}">公開可能キーを登録する</a></p>
+                                        <p><a href="{{ url('stripe4_admin_stripe_user') }}">APIキーを登録する</a></p>
                                     {% endif %}
                                 </div>
                             </div>

@@ -13,6 +13,7 @@ stripe.admin.payment_status.bulk_action.error: '%count%件を失敗しました�
 stripe.admin.config.title: 'Stripe管理'
 stripe.admin.config.sub_title: 'プラグイン一覧'
 stripe.admin.config.header: '設定'
+stripe.admin.config.api_key.title: 'APIキー設定'
 stripe.admin.config.save: '登録'
 stripe.admin.config.required: '必須'
 stripe.admin.config.back: 'プラグイン一覧'
