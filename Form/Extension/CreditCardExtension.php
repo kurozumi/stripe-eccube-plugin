@@ -13,33 +13,34 @@
 namespace Plugin\Stripe4\Form\Extension;
 
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Eccube\Common\EccubeConfig;
 use Eccube\Entity\Order;
 use Eccube\Form\Type\Shopping\OrderType;
 use Eccube\Form\Type\ToggleSwitchType;
-use Plugin\Stripe4\Form\Type\CreditCardType;
 use Plugin\Stripe4\Service\Method\CreditCard;
+use Stripe\PaymentMethod;
+use Stripe\Stripe;
 use Symfony\Component\Form\AbstractTypeExtension;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Symfony\Component\Validator\Constraints\NotBlank;
 
 class CreditCardExtension extends AbstractTypeExtension
 {
     /**
-     * @var SessionInterface
+     * @var EccubeConfig
      */
-    private $session;
+    private $eccubeConfig;
 
-    public function __construct(
-        SessionInterface $session
-    )
+    public function __construct(EccubeConfig $eccubeConfig)
     {
-        $this->session = $session;
+        $this->eccubeConfig = $eccubeConfig;
+        Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options)
@@ -61,16 +62,36 @@ class CreditCardExtension extends AbstractTypeExtension
                             'error_bubbling' => false
                         ]);
 
-                    if ($Customer = $order->getCustomer()) {
+                    if ($customer = $order->getCustomer()) {
                         $form
                             ->add('stripe_saving_card', ToggleSwitchType::class, [
                                 'mapped' => true,
                                 'label' => 'カード情報を保存する'
-                            ])
-                            ->add('cards', CreditCardType::class, [
+                            ]);
+
+                        $cards = new ArrayCollection();
+                        if ($customer->hasStripeCustomerId()) {
+                            $cards = PaymentMethod::all([
+                                'customer' => $customer->getStripeCustomerId(),
+                                'type' => 'card'
+                            ]);
+                            $cards = new ArrayCollection($cards->data);
+                        }
+
+                        $form
+                            ->add('cards', ChoiceType::class, [
                                 'mapped' => false,
+                                'choices' => $cards,
+                                'multiple' => false,
                                 'expanded' => true,
-                                'choices' => $order->getCustomer()->getCreditCards()
+                                'required' => false,
+                                'placeholder' => false,
+                                'choice_label' => function (PaymentMethod $paymentMethod) {
+                                    return $paymentMethod->card->brand . ' •••• ' . $paymentMethod->card->last4;
+                                },
+                                'choice_value' => function (?PaymentMethod $paymentMethod) {
+                                    return $paymentMethod ? $paymentMethod->id : '';
+                                },
                             ]);
                     }
                 }

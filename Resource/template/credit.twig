@@ -9,7 +9,7 @@ Shopping/index.twigに追記
             <script src="https://js.stripe.com/v3/"></script>
             <div class="form-row" id="stripe-card-box">
                 {% if app.user %}
-                    <div id="stripe-card" class="form-group" style="display: none;">
+                    <div id="stripe-card" class="form-group">
                         <div id="card" class="form-control">
                             <!-- ここにクレジットカード番号入力欄が挿入される -->
                         </div>
@@ -17,13 +17,13 @@ Shopping/index.twigに追記
                             {{ form_widget(form.stripe_saving_card) }}
                         </div>
 
-                        {% if form.cards is defined and form.cards %}
+                        {% if form.cards is defined and form.cards|length %}
                             <a href="javascript:void(0)" class="change-stripe-card">登録カードを使用する</a>
                         {% endif %}
                     </div>
 
                     {% if form.cards is defined and form.cards %}
-                        <div id="{{ form.cards.vars.id }}" class="form-group">
+                        <div id="{{ form.cards.vars.id }}" class="form-group" style="display: none;">
                             <div class="ec-radio">
                                 {% for card in form.cards %}
                                     <div style="display: block">
@@ -84,7 +84,7 @@ Shopping/index.twigに追記
 
             // 入力変更時のリスナー
             // バリデーションメッセージを表示する
-            card.addEventListener('change', async (event) => {
+            card.on('change', async (event) => {
                 const displayError = document.getElementById('card-errors');
                 if (event.complete) {
                     await createStripePaymentMethod(card);
@@ -130,7 +130,10 @@ Shopping/index.twigに追記
                     .createPaymentMethod({
                         type: 'card',
                         card: card,
-                        billing_details: {}
+                        billing_details: {
+                            'name': '{{ Order.name01 }} {{ Order.name02 }}',
+                            'email': '{{ Order.email }}'
+                        }
                     })
                     .then(async (result) => {
                         if (result.error) {

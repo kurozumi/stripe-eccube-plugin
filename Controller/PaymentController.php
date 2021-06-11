@@ -25,14 +25,11 @@ use Eccube\Service\OrderHelper;
 use Eccube\Service\PurchaseFlow\PurchaseContext;
 use Plugin\Stripe4\Entity\Config;
 use Plugin\Stripe4\Entity\PaymentStatus;
-use Plugin\Stripe4\Entity\CreditCard;
 use Plugin\Stripe4\Repository\ConfigRepository;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
-use Plugin\Stripe4\Repository\CreditCardRepository;
 use Stripe\Customer;
 use Stripe\Exception\CardException;
 use Stripe\PaymentIntent;
-use Stripe\PaymentMethod;
 use Stripe\Refund;
 use Stripe\Stripe;
 use Symfony\Component\HttpFoundation\ParameterBag;
@@ -58,11 +55,6 @@ class PaymentController extends AbstractShoppingController
      * @var OrderHelper
      */
     private $orderHelper;
-
-    /**
-     * @var CreditCardRepository
-     */
-    private $creditCardRepository;
 
     /**
      * @var OrderStatusRepository
@@ -98,7 +90,6 @@ class PaymentController extends AbstractShoppingController
         CartService $cartService,
         OrderHelper $orderHelper,
         EccubeConfig $eccubeConfig,
-        CreditCardRepository $creditCardRepository,
         OrderStatusRepository $orderStatusRepository,
         OrderRepository $orderRepository,
         MailService $mailService,
@@ -112,7 +103,6 @@ class PaymentController extends AbstractShoppingController
 
         $this->cartService = $cartService;
         $this->orderHelper = $orderHelper;
-        $this->creditCardRepository = $creditCardRepository;
         $this->orderStatusRepository = $orderStatusRepository;
         $this->orderRepository = $orderRepository;
         $this->mailService = $mailService;
@@ -154,21 +144,20 @@ class PaymentController extends AbstractShoppingController
                     "capture_method" => $this->config->getCapture() ? "automatic" : "manual",
                 ];
 
-                if ($Order->getCustomer()) {
-                    /** @var CreditCard $creditCard */
-                    $creditCard = $this->creditCardRepository->findOneBy(['stripe_payment_method_id' => $paymentMethodId]);
-                    if ($creditCard) {
-                        $paymentIntentData['customer'] = $creditCard->getStripeCustomerId();
+                if ($customer = $Order->getCustomer()) {
+                    if ($customer->hasStripeCustomerId()) {
+                        $paymentIntentData['customer'] = $customer->getStripeCustomerId();
                     }
 
                     if ($Order->getStripeSavingCard()) {
-                        $stripeCustomer = Customer::create([
-                            "email" => $Order->getCustomer()->getEmail()
-                        ]);
-                        logs('stripe')->info($stripeCustomer->status);
-                        $paymentIntentData['customer'] = $stripeCustomer->id;
-                        $paymentMethod = PaymentMethod::retrieve($paymentMethodId);
-                        $paymentMethod->attach(['customer' => $stripeCustomer->id]);
+                        if (false === $customer->hasStripeCustomerId()) {
+                            $stripeCustomer = Customer::create([
+                                "email" => $Order->getCustomer()->getEmail()
+                            ]);
+                            logs('stripe')->info($stripeCustomer->status);
+                            $paymentIntentData['customer'] = $stripeCustomer->id;
+                        }
+                        $paymentIntentData['setup_future_usage'] = 'off_session';
                     }
                 }
 
@@ -298,24 +287,10 @@ class PaymentController extends AbstractShoppingController
 
                 // クレジットカード情報を保存する場合
                 if ($intent->customer) {
-                    $paymentMethod = PaymentMethod::retrieve($intent->payment_method);
-
-                    $creditCard = $this->creditCardRepository->findOneBy([
-                        "fingerprint" => $paymentMethod->card->fingerprint
-                    ]);
-
-                    // DBに未登録の場合保存
-                    if (null === $creditCard) {
-                        logs('stripe')->info('クレジットカード情報を保存');
-                        $creditCard = new CreditCard();
-                        $creditCard
-                            ->setCustomer($Order->getCustomer())
-                            ->setStripeCustomerId($intent->customer)
-                            ->setStripePaymentMethodId($intent->payment_method)
-                            ->setFingerprint($paymentMethod->card->fingerprint)
-                            ->setBrand($paymentMethod->card->brand)
-                            ->setLast4($paymentMethod->card->last4);
-                        $this->entityManager->persist($creditCard);
+                    $customer = $Order->getCustomer();
+                    if (false === $customer->hasStripeCustomerId()) {
+                        $customer->setStripeCustomerId($intent->customer);
+                        $this->entityManager->persist($customer);
                     }
                 }
 
