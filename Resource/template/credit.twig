@@ -27,7 +27,7 @@ Shopping/index.twigに追記
                             <div class="ec-radio">
                                 {% for card in form.cards %}
                                     <div style="display: block">
-                                        {{ form_widget(card) }}
+                                        {{ form_widget(card) }} <button class="btn btn-danger btn-xs" data-trigger="click" data-path="{{ path('shopping_credit_card_detach', {'pm': card.vars.value}) }}">削除</button>
                                     </div>
                                 {% endfor %}
                             </div>
