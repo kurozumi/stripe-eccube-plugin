@@ -38,7 +38,7 @@ class ShoppingController extends AbstractController
     /**
      * @Route("/detach/{pm}", name="shopping_credit_card_detach")
      */
-    public function detach(Request $request, $pm)
+    public function detach($pm)
     {
         /** @var Customer $customer */
         $customer = $this->getUser();
@@ -48,7 +48,9 @@ class ShoppingController extends AbstractController
         }
 
         $paymentMethod = PaymentMethod::retrieve($pm);
-        $paymentMethod->detach();
+        if ($customer->getStripeCustomerId() === $paymentMethod->customer) {
+            $paymentMethod->detach();
+        }
 
         return $this->redirectToRoute('shopping');
     }
