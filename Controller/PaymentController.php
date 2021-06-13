@@ -167,7 +167,7 @@ class PaymentController extends AbstractShoppingController
                 $this->entityManager->flush();
                 logs('stripe')->info($intent->status);
 
-                if ($intent->status === "requires_action") {
+                if ("requires_action" === $intent->status) {
                     $intent->confirm([
                         'return_url' => $this->generateUrl('shopping_stripe_callback', [], UrlGeneratorInterface::ABSOLUTE_URL)
                     ]);
