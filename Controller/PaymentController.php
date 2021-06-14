@@ -149,7 +149,7 @@ class PaymentController extends AbstractShoppingController
                         $paymentIntentData['customer'] = $customer->getStripeCustomerId();
                     }
 
-                    if ($Order->getStripeSavingCard()) {
+                    if ($Order->isStripeSaveCard()) {
                         if (false === $customer->hasStripeCustomerId()) {
                             $stripeCustomer = Customer::create([
                                 "email" => $Order->getCustomer()->getEmail()
@@ -157,6 +157,7 @@ class PaymentController extends AbstractShoppingController
                             logs('stripe')->info($stripeCustomer->status);
                             $paymentIntentData['customer'] = $stripeCustomer->id;
                         }
+                        // Stripe顧客にカード情報をアタッチする
                         $paymentIntentData['setup_future_usage'] = 'off_session';
                     }
                 }

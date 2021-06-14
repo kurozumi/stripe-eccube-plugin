@@ -39,7 +39,7 @@ trait OrderTrait
      * @var bool
      * @ORM\Column(type="boolean", options={"default":false})
      */
-    private $stripe_saving_card = false;
+    private $stripe_save_card = false;
 
     /**
      * @var PaymentStatus
@@ -89,18 +89,18 @@ trait OrderTrait
     /**
      * @return bool
      */
-    public function getStripeSavingCard(): bool
+    public function isStripeSaveCard(): bool
     {
-        return $this->stripe_saving_card;
+        return $this->stripe_save_card;
     }
 
     /**
-     * @param bool $stripe_saving_card
+     * @param bool $stripe_save_card
      * @return $this
      */
-    public function setStripeSavingCard(bool $stripe_saving_card): self
+    public function setStripeSaveCard(bool $stripe_save_card): self
     {
-        $this->stripe_saving_card = $stripe_saving_card;
+        $this->stripe_save_card = $stripe_save_card;
 
         return $this;
     }

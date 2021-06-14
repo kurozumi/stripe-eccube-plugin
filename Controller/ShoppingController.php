@@ -18,7 +18,6 @@ use Eccube\Controller\AbstractController;
 use Eccube\Entity\Customer;
 use Stripe\PaymentMethod;
 use Stripe\Stripe;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**

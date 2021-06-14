@@ -14,7 +14,7 @@ Shopping/index.twigに追記
                             <!-- ここにクレジットカード番号入力欄が挿入される -->
                         </div>
                         <div class="ec-checkbox">
-                            {{ form_widget(form.stripe_saving_card) }}
+                            {{ form_widget(form.stripe_save_card) }}
                         </div>
 
                         {% if form.cards is defined and form.cards|length %}

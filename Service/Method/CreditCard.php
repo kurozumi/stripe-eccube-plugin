@@ -30,9 +30,6 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 
 class CreditCard implements PaymentMethodInterface
 {
-    const STRIPE_CUSTOMER = 'stripe.customer';
-    const IS_SAVING_CARD = 'stripe.is_saving_card';
-
     /**
      * @var Order
      */
@@ -94,8 +91,6 @@ class CreditCard implements PaymentMethodInterface
      */
     public function verify()
     {
-        // TODO: Implement verify() method.
-
         // 決済ステータスを有効性チェック済みへ変更
         $PaymentStatus = $this->paymentStatusRepository->find(PaymentStatus::ENABLED);
         $this->Order->setStripePaymentStatus($PaymentStatus);
@@ -115,7 +110,6 @@ class CreditCard implements PaymentMethodInterface
      */
     public function checkout()
     {
-        // TODO: Implement checkout() method.
         $result = new PaymentResult();
         $result->setSuccess(true);
 
@@ -131,7 +125,6 @@ class CreditCard implements PaymentMethodInterface
      */
     public function apply()
     {
-        // TODO: Implement apply() method.
         // 受注ステーテスを決済処理中へ変更
         $OrderStatus = $this->orderStatusRepository->find(OrderStatus::PENDING);
         $this->Order->setOrderStatus($OrderStatus);
@@ -140,7 +133,7 @@ class CreditCard implements PaymentMethodInterface
 
         $this->parameterBag->set('stripe.Order', $this->Order);
 
-        // 3Dセキュア画面へリダイレクト
+        // 支払い処理へリダイレクト
         $dispatcher = new PaymentDispatcher();
         $dispatcher->setRoute('shopping_stripe_payment');
         $dispatcher->setForward(true);
@@ -153,7 +146,6 @@ class CreditCard implements PaymentMethodInterface
      */
     public function setFormType(FormInterface $form)
     {
-        // TODO: Implement setFormType() method.
         $this->form = $form;
     }
 
@@ -162,7 +154,6 @@ class CreditCard implements PaymentMethodInterface
      */
     public function setOrder(Order $Order)
     {
-        // TODO: Implement setOrder() method.
         $this->Order = $Order;
     }
 }

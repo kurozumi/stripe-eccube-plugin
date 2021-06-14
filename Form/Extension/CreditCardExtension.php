@@ -64,7 +64,7 @@ class CreditCardExtension extends AbstractTypeExtension
 
                     if ($customer = $order->getCustomer()) {
                         $form
-                            ->add('stripe_saving_card', ToggleSwitchType::class, [
+                            ->add('stripe_save_card', ToggleSwitchType::class, [
                                 'mapped' => true,
                                 'label' => 'カード情報を保存する'
                             ]);
