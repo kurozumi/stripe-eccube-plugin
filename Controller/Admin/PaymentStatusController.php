@@ -28,7 +28,6 @@ use Plugin\Stripe4\Entity\PaymentStatus;
 use Plugin\Stripe4\Form\Type\Admin\SearchPaymentType;
 use Plugin\Stripe4\Repository\PaymentStatusRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
-use Stripe\Charge;
 use Stripe\PaymentIntent;
 use Stripe\Refund;
 use Stripe\Stripe;

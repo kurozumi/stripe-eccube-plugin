@@ -17,8 +17,6 @@ use Eccube\Form\Type\Admin\OrderType;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\FormEvents;
 
 class OrderTypeExtension extends AbstractTypeExtension
 {
