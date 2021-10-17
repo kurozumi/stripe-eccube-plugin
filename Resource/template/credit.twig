@@ -57,7 +57,7 @@ Shopping/index.twigに追記
                 });
             });
 
-            const stripe = Stripe('{{ stripe_public_key }}');
+            const stripe = Stripe('{{ stripe_public_key }}', {locale: '{{ eccube_config.locale }}'});
             const elements = stripe.elements();
 
             // スタイルのカスタマイズ
