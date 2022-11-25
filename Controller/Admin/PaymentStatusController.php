@@ -102,7 +102,7 @@ class PaymentStatusController extends AbstractController
      * @Route("/%eccube_admin_route%/stripe/payment_status/{page_no}", requirements={"page_no" = "\d+"}, name="stripe_admin_payment_status_pageno")
      * @Template("@Stripe4/admin/payment_status.twig")
      */
-    public function index(Request $request, $page_no = null, PaginatorInterface $paginator)
+    public function index(Request $request, PaginatorInterface $paginator, $page_no = null)
     {
         $searchForm = $this->createForm(SearchPaymentType::class);
 
