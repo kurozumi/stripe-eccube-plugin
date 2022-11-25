@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,7 +13,6 @@
 
 namespace Plugin\Stripe4\Controller\Admin;
 
-
 use Eccube\Controller\AbstractController;
 use Eccube\Util\CacheUtil;
 use Eccube\Util\StringUtil;
@@ -25,7 +25,6 @@ use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class ConfigController
- * @package Plugin\Stripe4\Controller\Admin
  *
  * @Route("/%eccube_admin_route%/stripe")
  */
@@ -44,6 +43,7 @@ class StripeController extends AbstractController
     /**
      * @param Request $request
      * @param CacheUtil $cacheUtil
+     *
      * @return array|\Symfony\Component\HttpFoundation\RedirectResponse
      *
      * @Route("/user", name="stripe4_admin_stripe_user")
@@ -53,7 +53,7 @@ class StripeController extends AbstractController
     {
         $form = $this->createForm(UserType::class, [
             'public_key' => getenv('STRIPE_PUBLIC_KEY'),
-            'secret_key' => getenv('STRIPE_SECRET_KEY')
+            'secret_key' => getenv('STRIPE_SECRET_KEY'),
         ]);
         $form->handleRequest($request);
 
@@ -62,7 +62,7 @@ class StripeController extends AbstractController
 
             $this->replaceOrAddEnv([
                 'STRIPE_PUBLIC_KEY' => $data['public_key'],
-                'STRIPE_SECRET_KEY' => $data['secret_key']
+                'STRIPE_SECRET_KEY' => $data['secret_key'],
             ]);
 
             $cacheUtil->clearCache();
@@ -73,12 +73,13 @@ class StripeController extends AbstractController
         }
 
         return [
-            'form' => $form->createView()
+            'form' => $form->createView(),
         ];
     }
 
     /**
      * @param Request $request
+     *
      * @return array|\Symfony\Component\HttpFoundation\RedirectResponse
      *
      * @Route("/config", name="stripe4_admin_stripe_config")
@@ -102,13 +103,13 @@ class StripeController extends AbstractController
 
         return [
             'form' => $form->createView(),
-            'public_key' => getenv('STRIPE_PUBLIC_KEY')
+            'public_key' => getenv('STRIPE_PUBLIC_KEY'),
         ];
     }
 
     private function replaceOrAddEnv(array $replacement)
     {
-        $envFile = $this->getParameter('kernel.project_dir') . DIRECTORY_SEPARATOR . '.env';
+        $envFile = $this->getParameter('kernel.project_dir').DIRECTORY_SEPARATOR.'.env';
         if (file_exists($envFile)) {
             $env = file_get_contents($envFile);
             $env = StringUtil::replaceOrAddEnv($env, $replacement);

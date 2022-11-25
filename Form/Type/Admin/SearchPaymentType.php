@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4\Form\Type\Admin;
-
 
 use Eccube\Form\Type\Master\OrderStatusType;
 use Eccube\Form\Type\Master\PaymentType;
@@ -26,15 +26,15 @@ class SearchPaymentType extends AbstractType
         $builder
             ->add('Payments', PaymentType::class, [
                 'multiple' => true,
-                'expanded' => true
+                'expanded' => true,
             ])
             ->add('OrderStatuses', OrderStatusType::class, [
                 'multiple' => true,
-                'expanded' => true
+                'expanded' => true,
             ])
             ->add('PaymentStatuses', PaymentStatusType::class, [
                 'multiple' => true,
-                'expanded' => true
+                'expanded' => true,
             ]);
     }
 }

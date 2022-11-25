@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,10 +13,9 @@
 
 namespace Plugin\Stripe4\Repository;
 
-
+use Doctrine\Persistence\ManagerRegistry;
 use Eccube\Repository\AbstractRepository;
 use Plugin\Stripe4\Entity\Config;
-use Doctrine\Persistence\ManagerRegistry;
 
 class ConfigRepository extends AbstractRepository
 {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,7 +13,6 @@
 
 namespace Plugin\Stripe4\Form\Type\Master;
 
-
 use Eccube\Form\Type\MasterType;
 use Plugin\Stripe4\Entity\PaymentStatus;
 use Symfony\Component\Form\AbstractType;
@@ -23,7 +23,7 @@ class PaymentStatusType extends AbstractType
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults([
-            'class' => PaymentStatus::class
+            'class' => PaymentStatus::class,
         ]);
     }
 

@@ -1,39 +1,29 @@
 name: PHPStan
 on: [workflow_dispatch, pull_request]
 env:
-  DATABASE_URL: mysql://root:root@127.0.0.1:3306/eccube_db
-  DATABASE_SERVER_VERSION: 5
-
+  PLUGIN_CODE: Stripe4
+  PLUGIN_BRANCH: '4.2'
 jobs:
   phpstan:
     name: PHPStan
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: false
-          MYSQL_ROOT_USER: root
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: eccube_db
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      matrix:
+        eccube-versions: ['4.2']
+        php-versions: [ '7.4', '8.0', '8.1' ]
 
     steps:
       - name: Checkout EC-CUBE
         uses: actions/checkout@v2
         with:
           repository: EC-CUBE/ec-cube
-          ref: 4.1
+          ref: ${{ matrix.eccube-versions }}
 
       - name: Setup PHP, with composer and extensions
         uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
         with:
-          php-version: 7.4
+          php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xml, ctype, iconv, mysql, intl
           tools: composer:v2
 
@@ -58,16 +48,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          path: app/Plugin/${{ github.event.repository.name }}
-
-      - name: Setup EC-CUBE and Plugin
-        run: |
-          composer compile
-          bin/console eccube:plugin:install --code ${{ github.event.repository.name }}
-          bin/console cache:clear --no-warmup
-          bin/console eccube:plugin:enable --code ${{ github.event.repository.name }}
+          path: app/Plugin/${{ env.PLUGIN_CODE }}
+          ref: ${{ env.PLUGIN_BRANCH }}
 
       - name: PHPStan
         run: |
           composer require phpstan/phpstan --dev
-          vendor/bin/phpstan analyze app/Plugin/${{ github.event.repository.name }} -c "app/Plugin/${{ github.event.repository.name }}/phpstan.neon" --error-format=github
+          vendor/bin/phpstan analyze app/Plugin/${{ env.PLUGIN_CODE }} -c "app/Plugin/${{ env.PLUGIN_CODE }}/phpstan.neon" --error-format=github

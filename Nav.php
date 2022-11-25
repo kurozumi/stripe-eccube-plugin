@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,14 +13,12 @@
 
 namespace Plugin\Stripe4;
 
-
 use Eccube\Common\EccubeNav;
 
 class Nav implements EccubeNav
 {
-
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public static function getNav()
     {
@@ -28,9 +27,9 @@ class Nav implements EccubeNav
                 'children' => [
                     'stripe_admin_payment_status' => [
                         'name' => 'stripe.admin.nav.payment_list',
-                        'url' => 'stripe_admin_payment_status'
-                    ]
-                ]
+                        'url' => 'stripe_admin_payment_status',
+                    ],
+                ],
             ],
             'stripe' => [
                 'name' => 'stripe.admin.config.title',
@@ -38,10 +37,10 @@ class Nav implements EccubeNav
                 'children' => [
                     'stripe_admin_config' => [
                         'name' => 'stripe.admin.nav.config',
-                        'url' => 'stripe4_admin_stripe_config'
-                    ]
-                ]
-            ]
+                        'url' => 'stripe4_admin_stripe_config',
+                    ],
+                ],
+            ],
         ];
     }
 }

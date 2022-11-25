@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,13 +13,11 @@
 
 namespace Plugin\Stripe4\Entity;
 
-
 use Doctrine\ORM\Mapping as ORM;
 use Eccube\Annotation\EntityExtension;
 
 /**
  * Trait CustomerTrait
- * @package Plugin\Stripe4\Entity
  *
  * @EntityExtension("Eccube\Entity\Customer")
  */
@@ -41,6 +40,7 @@ trait CustomerTrait
 
     /**
      * @param string $stripe_customer_id
+     *
      * @return $this
      */
     public function setStripeCustomerId(string $stripe_customer_id): self

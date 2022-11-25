@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,17 +13,16 @@
 
 namespace Plugin\Stripe4\Entity;
 
-
 use Doctrine\ORM\Mapping as ORM;
 use Eccube\Entity\AbstractEntity;
 
 if (!class_exists(Config::class)) {
     /**
      * Class Config
-     * @package Plugin\Stripe4\Entity
      *
      * @ORM\Table(name="plg_stripe_config")
      * @ORM\Entity(repositoryClass="Plugin\Stripe4\Repository\ConfigRepository")
+     * @ORM\HasLifecycleCallbacks()
      */
     class Config extends AbstractEntity
     {
@@ -62,6 +62,7 @@ if (!class_exists(Config::class)) {
 
         /**
          * @param bool $capture
+         *
          * @return $this
          */
         public function setCapture(bool $capture): self

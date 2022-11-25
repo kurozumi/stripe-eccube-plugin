@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4;
-
 
 use Eccube\Entity\Payment;
 use Eccube\Plugin\AbstractPluginManager;
@@ -38,7 +38,7 @@ class PluginManager extends AbstractPluginManager
         $configRepository = $entityManager->getRepository(Config::class);
 
         $Config = $configRepository->get();
-        if(null === $Config) {
+        if (null === $Config) {
             $Config = new Config();
             $Config->setCapture(true);
             $entityManager->persist($Config);
@@ -77,7 +77,7 @@ class PluginManager extends AbstractPluginManager
         foreach ($statuses as $id => $name) {
             $PaymentStatus = $entityManager->find($class, $id);
             if (!$PaymentStatus) {
-                $PaymentStatus = new $class;
+                $PaymentStatus = new $class();
             }
             $PaymentStatus->setId($id);
             $PaymentStatus->setName($name);
@@ -95,13 +95,12 @@ class PluginManager extends AbstractPluginManager
             PaymentStatus::PROVISIONAL_SALES => '仮売上',
             PaymentStatus::ACTUAL_SALES => '実売上',
             PaymentStatus::CANCEL => 'キャンセル',
-            PaymentStatus::REFUND => '返金'
+            PaymentStatus::REFUND => '返金',
         ];
         $this->createMasterData($container, $statuses, PaymentStatus::class);
     }
 
     public function createSubscriptionStatuses(ContainerInterface $container)
     {
-
     }
 }
