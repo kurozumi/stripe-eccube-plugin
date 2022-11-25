@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,7 +13,6 @@
 
 namespace Plugin\Stripe4\Tests\Form\Admin\Stripe;
 
-
 use Eccube\Tests\Form\Type\AbstractTypeTestCase;
 use Plugin\Stripe4\Form\Type\Admin\Stripe\UserType;
 
@@ -25,30 +25,25 @@ class UserTypeTest extends AbstractTypeTestCase
         'secret_key' => 'dummy',
     ];
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
         $this->form = $this->formFactory
             ->createBuilder(UserType::class, null, [
-                'csrf_protection' => false
+                'csrf_protection' => false,
             ])
             ->getForm();
     }
 
-    public function tearDown()
-    {
-        parent::tearDown();
-    }
-
-    public function testPUBLIC_KEYが空はエラー()
+    public function testPUBLICKEYが空はエラー()
     {
         $this->formData['public_key'] = '';
         $this->form->submit($this->formData);
         self::assertFalse($this->form->isValid());
     }
 
-    public function testSECRET_KEYが空はエラー()
+    public function testSECRETKEYが空はエラー()
     {
         $this->formData['secret_key'] = '';
         $this->form->submit($this->formData);

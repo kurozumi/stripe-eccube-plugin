@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4\Form\Extension\Admin;
-
 
 use Eccube\Form\Type\Admin\OrderType;
 use Symfony\Component\Form\AbstractTypeExtension;
@@ -27,16 +27,22 @@ class OrderTypeExtension extends AbstractTypeExtension
                 'label' => 'stripe.admin.order.edit.payment_indent.label',
                 'disabled' => true,
                 'eccube_form_options' => [
-                    'auto_render' => true
-                ]
+                    'auto_render' => true,
+                ],
             ]);
     }
 
-    public function getExtendedType()
+    /**
+     * @return string
+     */
+    public function getExtendedType(): string
     {
         return OrderType::class;
     }
 
+    /**
+     * @return iterable
+     */
     public static function getExtendedTypes(): iterable
     {
         yield OrderType::class;

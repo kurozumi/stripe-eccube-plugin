@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4\Controller;
-
 
 use Eccube\Common\EccubeConfig;
 use Eccube\Controller\AbstractShoppingController;
@@ -40,7 +40,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Class StripeController
- * @package Plugin\Stripe4\Controller
  *
  * @Route("/shopping/stripe")
  */
@@ -96,8 +95,7 @@ class PaymentController extends AbstractShoppingController
         PaymentStatusRepository $paymentStatusRepository,
         ConfigRepository $configRepository,
         ParameterBag $parameterBag
-    )
-    {
+    ) {
         $this->eccubeConfig = $eccubeConfig;
         Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
 
@@ -113,6 +111,7 @@ class PaymentController extends AbstractShoppingController
 
     /**
      * @return RedirectResponse
+     *
      * @throws \Stripe\Exception\ApiErrorException
      *
      * @Route("/payment", name="shopping_stripe_payment")
@@ -136,12 +135,12 @@ class PaymentController extends AbstractShoppingController
                 logs('stripe')->info('決済処理開始', [$Order->getId()]);
 
                 $paymentIntentData = [
-                    "amount" => (int)$Order->getPaymentTotal(),
-                    "currency" => $this->eccubeConfig["currency"],
-                    "payment_method" => $paymentMethodId,
-                    "confirmation_method" => "manual",
-                    "confirm" => true,
-                    "capture_method" => $this->config->getCapture() ? "automatic" : "manual",
+                    'amount' => (int) $Order->getPaymentTotal(),
+                    'currency' => $this->eccubeConfig['currency'],
+                    'payment_method' => $paymentMethodId,
+                    'confirmation_method' => 'manual',
+                    'confirm' => true,
+                    'capture_method' => $this->config->getCapture() ? 'automatic' : 'manual',
                 ];
 
                 if ($customer = $Order->getCustomer()) {
@@ -152,7 +151,7 @@ class PaymentController extends AbstractShoppingController
                     if ($Order->isStripeSaveCard()) {
                         if (false === $customer->hasStripeCustomerId()) {
                             $stripeCustomer = Customer::create([
-                                "email" => $Order->getCustomer()->getEmail()
+                                'email' => $Order->getCustomer()->getEmail(),
                             ]);
                             logs('stripe')->info($stripeCustomer->status);
                             $paymentIntentData['customer'] = $stripeCustomer->id;
@@ -168,9 +167,9 @@ class PaymentController extends AbstractShoppingController
                 $this->entityManager->flush();
                 logs('stripe')->info($intent->status);
 
-                if ("requires_action" === $intent->status) {
+                if ('requires_action' === $intent->status) {
                     $intent->confirm([
-                        'return_url' => $this->generateUrl('shopping_stripe_callback', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                        'return_url' => $this->generateUrl('shopping_stripe_callback', [], UrlGeneratorInterface::ABSOLUTE_URL),
                     ]);
                 }
             } else {
@@ -178,7 +177,6 @@ class PaymentController extends AbstractShoppingController
             }
 
             return $this->generateResponse($intent, $Order);
-
         } catch (\Exception $e) {
             logs('stripe')->error($e->getMessage());
 
@@ -196,7 +194,9 @@ class PaymentController extends AbstractShoppingController
 
     /**
      * @param Request $request
+     *
      * @return RedirectResponse
+     *
      * @throws \Stripe\Exception\ApiErrorException
      *
      * @Route("/callback", name="shopping_stripe_callback")
@@ -206,27 +206,26 @@ class PaymentController extends AbstractShoppingController
         try {
             if (null !== $request->query->get('payment_intent')) {
                 $intent = PaymentIntent::retrieve($request->query->get('payment_intent'));
-                if ($intent->status == "requires_confirmation") {
+                if ($intent->status == 'requires_confirmation') {
                     $intent->confirm([
-                        'return_url' => $this->generateUrl('shopping_stripe_callback', [], UrlGeneratorInterface::ABSOLUTE_URL)
+                        'return_url' => $this->generateUrl('shopping_stripe_callback', [], UrlGeneratorInterface::ABSOLUTE_URL),
                     ]);
                 }
 
                 /** @var Order $Order */
                 $Order = $this->orderRepository->findOneBy([
                     'stripe_payment_method_id' => $intent->payment_method,
-                    'OrderStatus' => OrderStatus::PENDING
+                    'OrderStatus' => OrderStatus::PENDING,
                 ]);
 
                 if (null === $Order) {
-                    throw new \Exception("受注情報が存在しません");
+                    throw new \Exception('受注情報が存在しません');
                 }
             } else {
                 throw new CardException('決済エラー');
             }
 
             return $this->generateResponse($intent, $Order);
-
         } catch (\Exception $e) {
             logs('stripe')->error($e->getMessage());
 
@@ -243,7 +242,9 @@ class PaymentController extends AbstractShoppingController
     /**
      * @param PaymentIntent $intent
      * @param Order $Order
+     *
      * @return RedirectResponse
+     *
      * @throws \Eccube\Service\PurchaseFlow\PurchaseException
      * @throws \Stripe\Exception\ApiErrorException
      */
@@ -252,12 +253,13 @@ class PaymentController extends AbstractShoppingController
         logs('stripe')->info($intent->status);
 
         switch ($intent->status) {
-            case "requires_action":
-            case "requires_source_action":
+            case 'requires_action':
+            case 'requires_source_action':
                 logs('stripe')->info($intent->description);
+
                 return $this->redirect($intent->next_action->redirect_to_url->url);
-            case "requires_payment_method":
-            case "requires_source":
+            case 'requires_payment_method':
+            case 'requires_source':
                 // Card was not properly authenticated, suggest a new payment method
                 logs('stripe')->error($intent->description);
 
@@ -267,11 +269,12 @@ class PaymentController extends AbstractShoppingController
 
                 $this->rollbackOrder($Order);
 
-                $message = "Your card was denied, please provide a new payment method";
+                $message = 'Your card was denied, please provide a new payment method';
                 logs('stripe')->error($message);
+
                 return $this->redirectToRoute('shopping_error');
-            case "succeeded":
-            case "requires_capture":
+            case 'succeeded':
+            case 'requires_capture':
                 logs('stripe')->info('受注ステータスを新規受付へ変更', [$Order->getId()]);
                 $OrderStatus = $this->orderStatusRepository->find(OrderStatus::NEW);
                 $Order->setOrderStatus($OrderStatus);
@@ -327,6 +330,7 @@ class PaymentController extends AbstractShoppingController
 
     /**
      * @param PaymentIntent $intent
+     *
      * @throws \Stripe\Exception\ApiErrorException
      */
     protected function createRefund(PaymentIntent $intent)
@@ -352,5 +356,4 @@ class PaymentController extends AbstractShoppingController
 
         $this->entityManager->flush();
     }
-
 }

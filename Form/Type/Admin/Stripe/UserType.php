@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,7 +13,6 @@
 
 namespace Plugin\Stripe4\Form\Type\Admin\Stripe;
 
-
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -25,13 +25,13 @@ class UserType extends AbstractType
         $builder
             ->add('public_key', TextType::class, [
                 'constraints' => [
-                    new NotBlank()
-                ]
+                    new NotBlank(),
+                ],
             ])
             ->add('secret_key', TextType::class, [
                 'constraints' => [
-                    new NotBlank()
-                ]
+                    new NotBlank(),
+                ],
             ]);
     }
 }

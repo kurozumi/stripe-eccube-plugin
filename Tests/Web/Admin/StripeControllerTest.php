@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,23 +13,12 @@
 
 namespace Plugin\Stripe4\Tests\Web\Admin;
 
-
 use Eccube\Common\Constant;
 use Eccube\Tests\Web\Admin\AbstractAdminWebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
 class StripeControllerTest extends AbstractAdminWebTestCase
 {
-    public function setUp()
-    {
-        parent::setUp();
-    }
-
-    public function tearDown()
-    {
-        parent::tearDown();
-    }
-
     public function testページ表示チェック()
     {
         $this->client->request('GET', $this->generateUrl('stripe4_admin_stripe_config'));
@@ -38,17 +28,17 @@ class StripeControllerTest extends AbstractAdminWebTestCase
 
     public function test公開可能キーとシークレットキーを登録したらenvファイルに追記されるか()
     {
-        $envFile = self::$container->getParameter('kernel.project_dir') . '/.env';
+        $envFile = self::$container->getParameter('kernel.project_dir').'/.env';
 
         $fs = new Filesystem();
-        $fs->copy($envFile, $envFile . '.backup');
+        $fs->copy($envFile, $envFile.'.backup');
 
         $this->client->request('POST', $this->generateUrl('stripe4_admin_stripe_user'), [
             'user' => [
                 'public_key' => 'dummy',
                 'secret_key' => 'dummy',
-                Constant::TOKEN_NAME => 'dummy'
-            ]
+                Constant::TOKEN_NAME => 'dummy',
+            ],
         ]);
 
         $env = file_get_contents($envFile);
@@ -59,14 +49,14 @@ class StripeControllerTest extends AbstractAdminWebTestCase
         ];
 
         foreach ($keys as $key) {
-            $pattern = '/^(' . $key . ')=(.*)/m';
+            $pattern = '/^('.$key.')=(.*)/m';
             if (preg_match($pattern, $env, $matches)) {
                 self::assertEquals('dummy', $matches[2]);
             } else {
-                self::fail(sprintf("%sが見つかりませんでした。", $key));
+                self::fail(sprintf('%sが見つかりませんでした。', $key));
             }
         }
 
-        $fs->rename($envFile . '.backup', $envFile, true);
+        $fs->rename($envFile.'.backup', $envFile, true);
     }
 }

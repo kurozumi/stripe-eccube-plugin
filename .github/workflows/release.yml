@@ -2,6 +2,8 @@ name: Packaging for EC-CUBE Plugin
 on:
   release:
     types: [ published ]
+env:
+  PLUGIN_CODE: Stripe4
 jobs:
   deploy:
     name: Build
@@ -17,12 +19,12 @@ jobs:
           find $GITHUB_WORKSPACE -name ".git*" -and ! -name ".gitkeep" -print0 | xargs -0 rm -rf
           chmod -R o+w $GITHUB_WORKSPACE
           cd $GITHUB_WORKSPACE
-          tar cvzf ../${{ github.event.repository.name }}-${{ github.event.release.tag_name }}.tar.gz ./*
+          tar cvzf ../${{ env.PLUGIN_CODE }}-${{ github.event.release.tag_name }}.tar.gz ./*
       - name: Upload binaries to release of TGZ
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ runner.workspace }}/${{ github.event.repository.name }}-${{ github.event.release.tag_name }}.tar.gz
-          asset_name: ${{ github.event.repository.name }}-${{ github.event.release.tag_name }}.tar.gz
+          file: ${{ runner.workspace }}/${{ env.PLUGIN_CODE }}-${{ github.event.release.tag_name }}.tar.gz
+          asset_name: ${{ env.PLUGIN_CODE }}-${{ github.event.release.tag_name }}.tar.gz
           tag: ${{ github.ref }}
           overwrite: true

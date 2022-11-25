@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4\Service\Method;
-
 
 use Eccube\Common\EccubeConfig;
 use Eccube\Entity\Master\OrderStatus;
@@ -71,8 +71,7 @@ class CreditCard implements PaymentMethodInterface
         PurchaseFlow $shoppingPurchaseFlow,
         EccubeConfig $eccubeConfig,
         ParameterBag $parameterBag
-    )
-    {
+    ) {
         $this->eccubeConfig = $eccubeConfig;
         Stripe::setApiKey($this->eccubeConfig['stripe_secret_key']);
 
@@ -83,7 +82,7 @@ class CreditCard implements PaymentMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      *
      * 注文確認画面遷移時に呼び出される
      *
@@ -102,7 +101,7 @@ class CreditCard implements PaymentMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      *
      * 注文時に呼び出される。
      *
@@ -117,7 +116,7 @@ class CreditCard implements PaymentMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      *
      * 注文時に呼び出される
      *
@@ -142,7 +141,7 @@ class CreditCard implements PaymentMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function setFormType(FormInterface $form)
     {
@@ -152,7 +151,7 @@ class CreditCard implements PaymentMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function setOrder(Order $Order)
     {

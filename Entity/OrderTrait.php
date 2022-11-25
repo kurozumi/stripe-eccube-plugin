@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -17,7 +18,6 @@ use Eccube\Annotation\EntityExtension;
 
 /**
  * Trait OrderTrait
- * @package Plugin\Stripe4\Entity
  *
  * @EntityExtension("Eccube\Entity\Order")
  */
@@ -58,6 +58,7 @@ trait OrderTrait
 
     /**
      * @param string|null $stripe_payment_method_id
+     *
      * @return $this
      */
     public function setStripePaymentMethodId(?string $stripe_payment_method_id): self
@@ -77,6 +78,7 @@ trait OrderTrait
 
     /**
      * @param string|null $stripe_payment_intent_id
+     *
      * @return $this
      */
     public function setStripePaymentIntentId(?string $stripe_payment_intent_id): self
@@ -96,6 +98,7 @@ trait OrderTrait
 
     /**
      * @param bool $stripe_save_card
+     *
      * @return $this
      */
     public function setStripeSaveCard(bool $stripe_save_card): self
@@ -116,6 +119,7 @@ trait OrderTrait
 
     /**
      * @param PaymentStatus|null $paymentStatus
+     *
      * @return $this
      */
     public function setStripePaymentStatus(?PaymentStatus $paymentStatus): self

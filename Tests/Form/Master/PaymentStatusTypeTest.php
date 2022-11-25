@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4\Tests\Form\Master;
-
 
 use Eccube\Tests\Form\Type\AbstractTypeTestCase;
 use Plugin\Stripe4\Entity\PaymentStatus;
@@ -27,7 +27,7 @@ class PaymentStatusTypeTest extends AbstractTypeTestCase
     /** @var PaymentStatusRepository */
     protected $paymentStatusRepository;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -37,14 +37,9 @@ class PaymentStatusTypeTest extends AbstractTypeTestCase
 
         $this->form = $this->formFactory
             ->createBuilder(PaymentStatusType::class, null, [
-                'csrf_protection' => false
+                'csrf_protection' => false,
             ])
             ->getForm();
-    }
-
-    public function tearDown()
-    {
-        parent::tearDown();
     }
 
     public function test正常テスト()

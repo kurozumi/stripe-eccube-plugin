@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -22,7 +23,7 @@ class TwigBlock implements EccubeTwigBlock
     public static function getTwigBlock()
     {
         return [
-            '@Stripe4/credit.twig'
+            '@Stripe4/credit.twig',
         ];
     }
 }

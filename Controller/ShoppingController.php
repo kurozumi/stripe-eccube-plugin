@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -12,7 +13,6 @@
 
 namespace Plugin\Stripe4\Controller;
 
-
 use Eccube\Common\EccubeConfig;
 use Eccube\Controller\AbstractController;
 use Eccube\Entity\Customer;
@@ -22,7 +22,6 @@ use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class CreditCardController
- * @package Plugin\Stripe4\Controller
  *
  * @Route("/shopping/creadit_card")
  */

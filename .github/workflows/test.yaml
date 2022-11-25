@@ -1,5 +1,10 @@
 name: CI/CD for EC-CUBE4 Plugin
-on: [workflow_dispatch, pull_request]
+on: [ workflow_dispatch, pull_request ]
+env:
+  PLUGIN_CODE: Stripe4
+  PLUGIN_BRANCH: '4.2'
+  APP_ENV: 'test'
+  APP_DEBUG: 0
 jobs:
   phpunit:
     name: PHPUnit
@@ -7,34 +12,43 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        eccube-versions: ['4.0','4.1-beta2']
-        php-versions: [7.1,7.2,7.3,7.4]
-        database: [mysql, pgsql]
+        eccube-versions: [ '4.2' ]
+        php-versions: [ '7.4', '8.0', '8.1' ]
+        database: [ 'mysql', 'mysql8', 'pgsql' ]
         include:
           - database: mysql
-            database_url: mysql://root:root@127.0.0.1:3306/eccube_db
-            database_server_version: 5
+            database_url: mysql://root:password@127.0.0.1:3306/eccube_db
+            database_server_version: 5.7
+            database_charset: utf8mb4
+          - database: mysql8
+            database_url: mysql://root:password@127.0.0.1:3308/eccube_db
+            database_server_version: 8
+            database_charset: utf8mb4
           - database: pgsql
             database_url: postgres://postgres:password@127.0.0.1:5432/eccube_db
-            database_server_version: 11
+            database_server_version: 14
+            database_charset: utf8
 
     services:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: false
-          MYSQL_ROOT_USER: root
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: eccube_db
+          MYSQL_ROOT_PASSWORD: password
         ports:
           - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      mysql8:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: password
+        ports:
+          - 3308:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
       postgres:
         image: postgres:11
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: eccube_db
         ports:
           - 5432:5432
         # needed because the postgres container does not provide a healthcheck
@@ -47,16 +61,7 @@ jobs:
           repository: EC-CUBE/ec-cube
           ref: ${{ matrix.eccube-versions }}
 
-      - name: Setup PHP, with composer v1 and extensions
-        if: matrix.eccube-versions == '4.0'
-        uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
-        with:
-          php-version: ${{ matrix.php-versions }}
-          extensions: mbstring, xml, ctype, iconv, mysql, intl
-          tools: composer:v1
-
       - name: Setup PHP, with composer and extensions
-        if: matrix.eccube-versions != '4.0'
         uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
         with:
           php-version: ${{ matrix.php-versions }}
@@ -77,59 +82,70 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run : |
+        run: |
           composer install --no-progress --prefer-dist --optimize-autoloader
           composer require stripe/stripe-php
-
-      - name: Install Composer dependencies for EC-CUBE4.0
-        if: matrix.eccube-versions == '4.0'
-        run: |
-          composer require --dev kiy0taka/eccube4-test-fixer
 
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          path: app/Plugin/${{ github.event.repository.name }}
+          path: app/Plugin/${{ env.PLUGIN_CODE }}
+          ref: ${{ env.PLUGIN_BRANCH }}
 
-      - name: Setup EC-CUBE and Plugin
+      - name: Setup EC-CUBE
         run: |
-          composer compile
-          bin/console eccube:plugin:install --code ${{ github.event.repository.name }}
+          bin/console doctrine:database:create
+          bin/console doctrine:schema:create
+          bin/console eccube:fixtures:load
+        env:
+          APP_ENV: ${{ env.APP_ENV }}
+          APP_DEBUG: ${{ env.APP_DEBUG }}
+          DATABASE_URL: ${{ matrix.database_url }}
+          DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
+          DATABASE_CHARSET: ${{ matrix.database_charset }}
+
+      - name: Setup Plugin
+        run: |
+          bin/console eccube:plugin:install --code ${{ env.PLUGIN_CODE }}
           bin/console cache:clear --no-warmup
-          bin/console eccube:plugin:enable --code ${{ github.event.repository.name }}
+          bin/console eccube:plugin:enable --code ${{ env.PLUGIN_CODE }}
+          bin/console cache:clear --no-warmup
         env:
+          APP_ENV: ${{ env.APP_ENV }}
+          APP_DEBUG: ${{ env.APP_DEBUG }}
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
-
-      - name: Run Tests for EC-CUBE4.0
-        if: matrix.eccube-versions == '4.0'
-        run: |
-          find app/Plugin/${{ github.event.repository.name }}/Tests -name "*Test.php" | while read TESTCASE
-          do
-            bin/phpunit --include-path vendor/kiy0taka/eccube4-test-fixer/src --loader 'Eccube\PHPUnit\Loader\Eccube4CompatTestSuiteLoader' ${TESTCASE}
-          done
-        env:
-          DATABASE_URL: ${{ matrix.database_url }}
-          DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
+          DATABASE_CHARSET: ${{ matrix.database_charset }}
 
       - name: Run Tests
-        if: matrix.eccube-versions != '4.0'
         run: |
-          bin/phpunit app/Plugin/${{ github.event.repository.name }}/Tests
+          bin/console cache:clear --no-warmup
+          bin/phpunit -c app/Plugin/${{ env.PLUGIN_CODE }}/phpunit.xml.dist app/Plugin/${{ env.PLUGIN_CODE }}/Tests
         env:
+          APP_ENV: ${{ env.APP_ENV }}
+          APP_DEBUG: ${{ env.APP_DEBUG }}
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
+          DATABASE_CHARSET: ${{ matrix.database_charset }}
 
       - name: Update Plugin
         run: |
-          bin/console eccube:plugin:update ${{ github.event.repository.name }}
+          bin/console cache:clear --no-warmup
+          bin/console eccube:plugin:update ${{ env.PLUGIN_CODE }}
         env:
+          APP_ENV: ${{ env.APP_ENV }}
+          APP_DEBUG: ${{ env.APP_DEBUG }}
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
+          DATABASE_CHARSET: ${{ matrix.database_charset }}
 
       - name: Uninstall Plugin
         run: |
-          bin/console eccube:plugin:uninstall --code=${{ github.event.repository.name }}
+          bin/console cache:clear --no-warmup
+          bin/console eccube:plugin:uninstall --code=${{ env.PLUGIN_CODE }}
         env:
+          APP_ENV: ${{ env.APP_ENV }}
+          APP_DEBUG: ${{ env.APP_DEBUG }}
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
+          DATABASE_CHARSET: ${{ matrix.database_charset }}

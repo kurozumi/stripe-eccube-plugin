@@ -1,4 +1,4 @@
-# Stripe for EC-CUBE4
+# Stripe for EC-CUBE4.2
 
 EC-CUBE4でStripeでクレジットカード決済ができるプラグインのサンプルです。
 非公式プラグインですのでご利用は自己責任でお願い致します。
@@ -33,7 +33,7 @@ Stripeのアカウントを取得して管理画面でAPIキーを設定して�
 
 ## Shopping/index.twigにタグを追記
 
-Shopping/index.twigに以下のタグを追記してください。
+Shopping/index.twigの支払い方法の下に以下のタグを追記してください。
 
 ```
 {{ include('@Stripe4/credit.twig', ignore_missing=true) }}

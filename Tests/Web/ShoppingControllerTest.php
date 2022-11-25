@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4\Tests\Web;
-
 
 use Eccube\Common\Constant;
 use Eccube\Entity\Delivery;
@@ -42,12 +42,11 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
      */
     private $productRepository;
 
-
     private $themeFrontDefaultDir;
 
     private $themeFrontDir;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -59,11 +58,6 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
 
         $this->themeFrontDefaultDir = $this->eccubeConfig->get('eccube_theme_front_default_dir');
         $this->themeFrontDir = $this->eccubeConfig->get('eccube_theme_front_dir');
-    }
-
-    public function tearDown()
-    {
-        parent::tearDown();
     }
 
     public function testお支払い方法にクレジットカード決済が表示されるか()
@@ -82,7 +76,7 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
         // 確認画面
         $crawler = $this->scenarioConfirm();
 
-        self::assertContains("クレジットカード決済", $crawler->html());
+        self::assertContains('クレジットカード決済', $crawler->html());
     }
 
     public function testクレジットカード決済を選択したときにクレジットカード情報項目が表示されるか()
@@ -125,10 +119,10 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
                 ],
                 'Payment' => 1,
                 Constant::TOKEN_NAME => '_dummy',
-            ]
+            ],
         ]);
 
-        self::assertNotContains("クレジットカード情報", $crawler->html());
+        self::assertNotContains('クレジットカード情報', $crawler->html());
 
         // クレジットカード決済を選択
         $crawler = $this->scenarioRedirectTo($Customer, [
@@ -140,22 +134,23 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
                     ],
                 ],
                 'Payment' => $paymentOption->getPaymentId(),
-                Constant::TOKEN_NAME => '_dummy'
-            ]
+                Constant::TOKEN_NAME => '_dummy',
+            ],
         ]);
 
-        self::assertContains("クレジットカード情報", $crawler->html());
+        self::assertContains('クレジットカード情報', $crawler->html());
     }
 
     /**
      * @param Delivery $delivery
+     *
      * @return PaymentOption
      */
     private function createPaymentOption(Delivery $delivery): PaymentOption
     {
         /** @var Payment $payment クレジットカード決済 */
         $payment = $this->paymentRepository->findOneBy([
-            "method_class" => CreditCard::class
+            'method_class' => CreditCard::class,
         ]);
 
         $paymentOption = new PaymentOption();

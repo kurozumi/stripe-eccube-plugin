@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4\Form\Extension;
-
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Eccube\Common\EccubeConfig;
@@ -59,21 +59,21 @@ class CreditCardExtension extends AbstractTypeExtension
                 if ($order->getPayment()->getMethodClass() === CreditCard::class) {
                     $form
                         ->add('stripe_payment_method_id', HiddenType::class, [
-                            'error_bubbling' => false
+                            'error_bubbling' => false,
                         ]);
 
                     if ($customer = $order->getCustomer()) {
                         $form
                             ->add('stripe_save_card', ToggleSwitchType::class, [
                                 'mapped' => true,
-                                'label' => 'カード情報を保存する'
+                                'label' => 'カード情報を保存する',
                             ]);
 
                         $cards = new ArrayCollection();
                         if ($customer->hasStripeCustomerId()) {
                             $cards = PaymentMethod::all([
                                 'customer' => $customer->getStripeCustomerId(),
-                                'type' => 'card'
+                                'type' => 'card',
                             ]);
                             $cards = new ArrayCollection($cards->data);
                         }
@@ -87,7 +87,7 @@ class CreditCardExtension extends AbstractTypeExtension
                                 'required' => false,
                                 'placeholder' => false,
                                 'choice_label' => function (PaymentMethod $paymentMethod) {
-                                    return $paymentMethod->card->brand . ' •••• ' . $paymentMethod->card->last4;
+                                    return $paymentMethod->card->brand.' •••• '.$paymentMethod->card->last4;
                                 },
                                 'choice_value' => function (?PaymentMethod $paymentMethod) {
                                     return $paymentMethod ? $paymentMethod->id : '';
@@ -119,7 +119,7 @@ class CreditCardExtension extends AbstractTypeExtension
     }
 
     /**
-     * @inheritDoc
+     * @return string
      */
     public function getExtendedType(): string
     {
@@ -131,6 +131,6 @@ class CreditCardExtension extends AbstractTypeExtension
      */
     public static function getExtendedTypes(): iterable
     {
-        return [OrderType::class];
+        yield OrderType::class;
     }
 }

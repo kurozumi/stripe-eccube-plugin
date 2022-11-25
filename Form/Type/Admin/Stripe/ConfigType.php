@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Stripe4
  *
@@ -11,7 +12,6 @@
  */
 
 namespace Plugin\Stripe4\Form\Type\Admin\Stripe;
-
 
 use Plugin\Stripe4\Entity\Config;
 use Symfony\Component\Form\AbstractType;
@@ -30,7 +30,7 @@ class ConfigType extends AbstractType
             ->add('capture', ChoiceType::class, [
                 'choices' => [
                     trans('stripe.admin.capture.actual_sales') => true,
-                    trans('stripe.admin.capture.provisional_sales') => false
+                    trans('stripe.admin.capture.provisional_sales') => false,
                 ],
                 'expanded' => false,
                 'multiple' => false,
@@ -40,7 +40,7 @@ class ConfigType extends AbstractType
             ->addEventListener(FormEvents::SUBMIT, function (FormEvent $event) {
                 $form = $event->getForm();
 
-                if(
+                if (
                     !getenv('STRIPE_PUBLIC_KEY') ||
                     !getenv('STRIPE_SECRET_KEY')
                 ) {
@@ -52,7 +52,7 @@ class ConfigType extends AbstractType
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults([
-            'data_class' => Config::class
+            'data_class' => Config::class,
         ]);
     }
 }
