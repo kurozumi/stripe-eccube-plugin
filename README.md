@@ -18,7 +18,7 @@ bin/console eccube:composer:require stripe/stripe-php
 
 #### GitHubからプラグインをクローン
 ```
-git clone git@github.com:kurozumi/Stripe4.git app/Plugin
+git clone git@github.com:kurozumi/stripe-eccube-plugin.git app/Plugin
 ```
 
 #### プラグインのインストールと有効化
