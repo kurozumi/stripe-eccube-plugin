@@ -76,7 +76,7 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
         // 確認画面
         $crawler = $this->scenarioConfirm();
 
-        self::assertContains('クレジットカード決済', $crawler->html());
+        self::assertStringContainsString('クレジットカード決済', $crawler->html());
     }
 
     public function testクレジットカード決済を選択したときにクレジットカード情報項目が表示されるか()
@@ -122,7 +122,7 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
             ],
         ]);
 
-        self::assertNotContains('クレジットカード情報', $crawler->html());
+        self::assertStringNotContainsString('クレジットカード情報', $crawler->html());
 
         // クレジットカード決済を選択
         $crawler = $this->scenarioRedirectTo($Customer, [
@@ -138,7 +138,7 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
             ],
         ]);
 
-        self::assertContains('クレジットカード情報', $crawler->html());
+        self::assertStringContainsString('クレジットカード情報', $crawler->html());
     }
 
     /**

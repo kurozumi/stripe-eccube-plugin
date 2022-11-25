@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - name: Checkout EC-CUBE
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: EC-CUBE/ec-cube
           ref: ${{ matrix.eccube-versions }}
@@ -87,10 +87,10 @@ jobs:
           composer require stripe/stripe-php
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: app/Plugin/${{ env.PLUGIN_CODE }}
-          ref: ${{ env.PLUGIN_BRANCH }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup EC-CUBE
         run: |
