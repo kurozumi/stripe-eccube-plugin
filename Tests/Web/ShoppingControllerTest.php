@@ -138,7 +138,7 @@ class ShoppingControllerTest extends AbstractShoppingControllerTestCase
             ],
         ]);
 
-        self::assertContains('クレジットカード情報', $crawler->html());
+        self::assertStringContainsString('クレジットカード情報', $crawler->html());
     }
 
     /**
